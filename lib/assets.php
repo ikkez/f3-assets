@@ -210,8 +210,10 @@ class Assets extends Prefab {
 			$exclude = $this->f3->get('ASSETS.combine.exclude');
 			if ($asset['origin']=='external')
 				$pre[] = $asset;
-			elseif (is_file($path) &&
-				(empty($exclude) || !preg_match('/'.$exclude.'/i',$path))) {
+			elseif (is_file($path) && (
+				(!isset($asset['exclude']) ||
+					!in_array('combine',$this->f3->split($asset['exclude']))) &&
+				(empty($exclude) || !preg_match('/'.$exclude.'/i',$path)))) {
 				// check if one of our combined files was changed (mtime)
 				$hash_key.=$path.filemtime($path);
 				$stack[] = $path;
@@ -274,8 +276,10 @@ class Assets extends Prefab {
 			// skip external files
 			if ($asset['origin'] == 'external')
 				continue;
-			elseif (is_file($path) &&
-				(empty($exclude) || !preg_match('/'.$exclude.'/i',$path))) {
+			elseif (is_file($path) && (
+				(!isset($asset['exclude']) ||
+					!in_array('minify',$this->f3->split($asset['exclude']))) &&
+				(empty($exclude) || !preg_match('/'.$exclude.'/i',$path)))) {
 				// proceed
 				$path_parts = pathinfo($path);
 				$filename = $path_parts['filename'].'.min.'.$type;
@@ -346,38 +350,34 @@ class Assets extends Prefab {
 	 * @param string $type
 	 * @param string $group
 	 * @param int $priority
-	 * @param string $name
+	 * @param array $params
 	 */
-	public function add($path,$type,$group='head',$priority=5,$name=null) {
+	public function add($path,$type,$group='head',$priority=5,$params=null) {
 		if (!isset($this->assets[$group]))
 			$this->assets[$group]=array();
 		if (!isset($this->assets[$group][$type]))
 			$this->assets[$group][$type]=array();
+		$asset = array(
+			'path'=>$path,
+			'type'=>$type,
+			'origin'=>''
+		) + ($params?:array());
 		if (preg_match('/^(http(s)?:)?\/\/.*/i',$path)) {
-			$this->assets[$group][$type][$priority][]=array(
-				'path'=>$path,
-				'type'=>$type,
-				'origin'=>'external'
-			);
+			$asset['origin'] = 'external';
+			$this->assets[$group][$type][$priority][]=$asset;
 			return;
 		}
 		foreach ($this->f3->split($this->f3->get('UI')) as $dir)
 			if (is_file($view=$this->f3->fixslashes($dir.$path))) {
-				$this->assets[$group][$type][$priority][]=array(
-					'path'=>$view,
-					'type'=>$type,
-					'origin'=>'internal'
-				);
+				$asset['path']=$view;
+				$asset['origin']='internal';
+				$this->assets[$group][$type][$priority][]=$asset;
 				return;
 			}
 		// file not found
 		if ($handler=$this->f3->get('ASSETS.onFileNotFound'))
 			$this->f3->call($handler,array($path,$this));
-		$this->assets[$group][$type][$priority][]=array(
-			'path'=>$path,
-			'type'=>$type,
-			'origin'=>''
-		);
+		$this->assets[$group][$type][$priority][]=$asset;
 	}
 
 	/**
@@ -447,7 +447,8 @@ class Assets extends Prefab {
 			$group = isset($params['group']) ? $params['group'] :
 				(($type == 'js') ? 'footer' : 'head');
 			$prio = isset($params['priority']) ? $this->template->resolve($params['priority']) : 5;
-			$this->add($src,$type,$group,$prio);
+			unset($params['priority'],$params['src'],$params['href'],$params['group']);
+			$this->add($src,$type,$group,$prio,$params);
 		}
 		// inner content
 		if (isset($node[0])) {
