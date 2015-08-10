@@ -10,7 +10,7 @@
  *	Copyright (c) 2015 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 0.9.0
+ *	@version: 0.9.1
  *	@date: 28.07.2015
  *	@since: 08.08.2014
  *
@@ -231,7 +231,8 @@ class Assets extends Prefab {
 							pathinfo($path,PATHINFO_DIRNAME).'/');
 					$content[] = $data;
 				}
-				$this->f3->write($filepath,implode("\n\n",$content));
+				$this->f3->write($filepath,
+					implode(($type=='js'?';':'')."\n",$content));
 			}
 			array_unshift($out,array(
 				'path'=>$filepath,
