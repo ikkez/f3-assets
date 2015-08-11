@@ -452,7 +452,7 @@ class Assets extends Prefab {
 		}
 		// inner content
 		if (isset($node[0])) {
-			$content = \Template::instance()->build($node);
+			$content = $this->template->resolve($node);
 			if (isset($params['type']))
 				$type = $this->template->resolve($params['type']);
 			$group = isset($params['group']) ? $params['group'] :
