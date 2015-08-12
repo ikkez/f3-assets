@@ -10,8 +10,8 @@
  *	Copyright (c) 2015 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 0.9.1
- *	@date: 28.07.2015
+ *	@version: 0.9.2
+ *	@date: 12.08.2015
  *	@since: 08.08.2014
  *
  **/
@@ -413,56 +413,83 @@ class Assets extends Prefab {
 	}
 
 	/**
-	 * parse node data and push new asset code
+	 * push new asset during template execution
 	 * @param $node
-	 * @return mixed
+	 * @return string
 	 */
-	public function parseNode($node) {
+	public function addNode($node) {
 		$src=false;
-		$type = '';
+		// find src
+		if (array_key_exists('src',$node))
+			$src = $node['src'];
+		elseif (array_key_exists('href',$node))
+			$src = $node['href'];
+		if ($src) {
+			// find type
+			if (!isset($node['type'])) {
+				if (preg_match('/.*\.(css|js)(?=[?#].*|$)/i',$src,$match))
+					$node['type'] = $match[1];
+				elseif (array_key_exists('src',$node))
+					$node['type'] = 'js';
+				elseif (array_key_exists('href',$node))
+					$node['type'] = 'css';
+				elseif(empty($type))
+					// unknown file type
+					return "";
+			}
+			$type = $node['type'];
+			// default slot is based on the type
+			if (!isset($node['group']))
+				$node['group'] = ($node['type'] == 'js')
+					? 'footer' : 'head';
+			if (!isset($node['priority']))
+				$node['priority'] = 5;
+			$group = $node['group'];
+			$prio = $node['priority'];
+			unset($node['priority'],$node['src'],$node['href'],$node['group'],$node['type']);
+			$this->add($src,$type,$group,$prio,$node);
+		}
+	}
+
+	/**
+	 * parse node data on template compiling
+	 * @param $node
+	 * @return string
+	 */
+	function parseNode($node) {
+		$src=false;
 		$params = array();
-		$node = $this->f3->unserialize($node);
 		if (isset($node['@attrib'])) {
 			$params = $node['@attrib'];
 			unset($node['@attrib']);
 		}
-		if (array_key_exists('src',$params)) {
+		// find src
+		if (array_key_exists('src',$params))
 			$src = $params['src'];
-			$type = 'js';
-		}
-		if (array_key_exists('href',$params)) {
+		elseif (array_key_exists('href',$params))
 			$src = $params['href'];
-			$type = 'css';
-		}
 		if ($src) {
-			$src = $this->template->resolve($src);
-			if (isset($params['type']))
-				$type = $this->template->resolve($params['type']);
-			elseif(preg_match('/.*\.(css|js)(?=[?#].*|$)/i',$src,$match))
-				$type = $match[1];
-			elseif(empty($type))
-				// unknown file type
-				return;
-			// default slot is based on the type
-			$group = isset($params['group']) ? $params['group'] :
-				(($type == 'js') ? 'footer' : 'head');
-			$prio = isset($params['priority']) ? $this->template->resolve($params['priority']) : 5;
-			unset($params['priority'],$params['src'],$params['href'],$params['group']);
-			$this->add($src,$type,$group,$prio,$params);
+			$out = '<?php \Assets::instance()->addNode(array(';
+			foreach($params as $key=>$val)
+				$out.=var_export($key,true).'=>'.(preg_match('/{{(.+?)}}/s',$val)
+					?$this->template->token($val):var_export($val,true)).',';
+			$out.=')); ?>';
+			return $out;
 		}
 		// inner content
-		if (isset($node[0])) {
-			$content = $this->template->resolve($node);
-			if (isset($params['type']))
-				$type = $this->template->resolve($params['type']);
-			$group = isset($params['group']) ? $params['group'] :
-				(($type == 'js') ? 'footer' : 'head');
+		if (isset($node[0]) && isset($params['type'])) {
+			if (!isset($params['group']))
+				$params['group'] = ($params['type'] == 'js')
+					? 'footer' : 'head';
 			if ($this->f3->get('ASSETS.handle_inline'))
-				$this->addInline($content,$type,$group);
+				return '<?php \Assets::instance()->addInline('.
+				'$this->resolve('.(var_export($node,true)).',get_defined_vars()),'.
+				var_export($params['type'],true).','.
+				var_export($params['group'],true).'); ?>';
 			else
 				// just bypass
-				echo $this->f3->call($this->formatter[$type],array(array(
-					'data'=>$content,
+				return $this->f3->call($this->formatter[$params['type']],array(array(
+					'data'=>$this->template->build($node),
 					'origin'=>'inline'
 				)));
 		}
@@ -510,8 +537,8 @@ class Assets extends Prefab {
 	 */
 	static public function renderAssetTag(array $node) {
 		// dynamic build on final rendering
-		return '<?php \Assets::instance()->parseNode('.
-			var_export(\Base::instance()->serialize($node),true).'); ?>';
+		$that = \Assets::instance();
+		return $that->parseNode($node);
 	}
 
 	/**
