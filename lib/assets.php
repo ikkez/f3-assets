@@ -10,7 +10,7 @@
  *	Copyright (c) 2015 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 0.9.2
+ *	@version: 0.9.3
  *	@date: 12.08.2015
  *	@since: 08.08.2014
  *
@@ -127,6 +127,16 @@ class Assets extends Prefab {
 	 */
 	public function reset() {
 		$this->assets = array();
+	}
+
+	/**
+	 * reset the temporary public path
+	 */
+	public function clear() {
+		if ($glob=@glob($this->f3->get('ASSETS.public_path').'*'))
+			foreach ($glob as $file)
+				if (preg_match('/.+?\.(js|css)/i',basename($file)))
+					@unlink($file);
 	}
 
 	/**
@@ -400,6 +410,12 @@ class Assets extends Prefab {
 		$this->add($path,'css',$group,$priority);
 	}
 
+	/**
+	 * add inline script or styles
+	 * @param string $content
+	 * @param string $type
+	 * @param string $group
+	 */
 	public function addInline($content,$type,$group='head') {
 		if (!isset($this->assets[$group]))
 			$this->assets[$group]=array();
