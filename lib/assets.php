@@ -158,7 +158,6 @@ class Assets extends Prefab {
 		if (!isset($this->assets[$group]))
 			return $assets;
 		$types = array_keys($this->assets[$group]);
-		$inline_stack=array();
 		foreach($types as $asset_type) {
 			if ($type && $type!=$asset_type)
 				continue;
@@ -211,12 +210,12 @@ class Assets extends Prefab {
 		$stack = array();
 		$inline_stack = array();
 		foreach($collection as $i=>$asset) {
+			$type = $asset['type'];
 			if ($asset['origin']=='inline') {
 				$inline_stack[] = $asset['data'];
 				continue;
 			}
 			$path = $asset['path'];
-			$type = $asset['type'];
 			$exclude = $this->f3->get('ASSETS.combine.exclude');
 			if ($asset['origin']=='external')
 				$pre[] = $asset;
@@ -255,6 +254,7 @@ class Assets extends Prefab {
 		if (!empty($inline_stack)) {
 			$out[] = array(
 				'data'=>implode($inline_stack),
+				'type'=>$type,
 				'origin'=>'inline'
 			);
 		}
@@ -272,8 +272,10 @@ class Assets extends Prefab {
 		$public_path = $this->f3->get('ASSETS.minify.public_path');
 		if (!is_dir($public_path))
 			mkdir($public_path,0777,true);
+		$type = false;
 		$inline_stack = array();
 		foreach($collection as $i=>&$asset) {
+			$type = $asset['type'];
 			if ($asset['origin']=='inline') {
 				$inline_stack[] = $asset['data'];
 				unset($collection[$i]);
@@ -281,7 +283,6 @@ class Assets extends Prefab {
 				continue;
 			}
 			$path = $asset['path'];
-			$type = $asset['type'];
 			$exclude = $this->f3->get('ASSETS.minify.exclude');
 			// skip external files
 			if ($asset['origin'] == 'external')
@@ -310,8 +311,7 @@ class Assets extends Prefab {
 			$data = implode($inline_stack);
 			$hash = $this->f3->hash($data);
 			$filename = $hash.'.min.'.$type;
-			if (!is_file($public_path.$filename) ||
-				(filemtime($path)>filemtime($public_path.$filename))) {
+			if (!is_file($public_path.$filename)) {
 				$this->f3->write($public_path.$filename,$data);
 				$min = $web->minify($filename,null,false,
 					$public_path);
