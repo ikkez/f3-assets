@@ -10,8 +10,8 @@
  *	Copyright (c) 2015 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 0.9.3
- *	@date: 12.08.2015
+ *	@version: 0.9.4
+ *	@date: 08.09.2015
  *	@since: 08.08.2014
  *
  **/
@@ -69,14 +69,22 @@ class Assets extends Prefab {
 					return sprintf('<script>%s</script>',$asset['data']);
 				$path = $asset['path'];
 				$mtime = $f3->get('ASSETS.timestamps') && is_file($path) ? '?'.filemtime($path) : '';
-				return sprintf('<script src="%s"></script>',$path.$mtime);
+				unset($asset['path'],$asset['origin'],$asset['type'],$asset['exclude']);
+				$params=$this->resolveAttr($asset+array('src'=>$path.$mtime));
+				return sprintf('<script%s></script>',$params);
 			},
 			'css'=>function($asset) use($f3) {
 				if ($asset['origin']=='inline')
 					return sprintf('<style type="text/css">%s</style>',$asset['data']);
 				$path = $asset['path'];
 				$mtime = $f3->get('ASSETS.timestamps') && is_file($path) ? '?'.filemtime($path) : '';
-				return sprintf('<link rel="stylesheet" type="text/css" href="%s" />',$path.$mtime);
+				unset($asset['path'],$asset['origin'],$asset['type'],$asset['exclude']);
+				$params=$this->resolveAttr($asset+array(
+					'rel'=>'stylesheet',
+					'type'=>'text/css',
+					'href'=>$path.$mtime,
+				));
+				return sprintf('<link%s/>',$params);
 			}
 		);
 		$this->filter=array(
@@ -203,39 +211,42 @@ class Assets extends Prefab {
 		$public_path = $this->f3->get('ASSETS.combine.public_path');
 		if (empty($collection) || count($collection) <= 1)
 			return $collection;
-		$pre = array();
-		$out = array();
 		$type = false;
 		$hash_key = '';
-		$stack = array();
-		$inline_stack = array();
+		$slots=array(
+			0=>array(), // external
+			1=>array(), // internal
+			2=>array(), // excluded
+			3=>array(), // inline
+		);
 		foreach($collection as $i=>$asset) {
 			$type = $asset['type'];
 			if ($asset['origin']=='inline') {
-				$inline_stack[] = $asset['data'];
+				$slots[3][] = $asset['data'];
 				continue;
 			}
 			$path = $asset['path'];
 			$exclude = $this->f3->get('ASSETS.combine.exclude');
 			if ($asset['origin']=='external')
-				$pre[] = $asset;
+				$slots[0][] = $asset;
 			elseif (is_file($path) && (
 				(!isset($asset['exclude']) ||
 					!in_array('combine',$this->f3->split($asset['exclude']))) &&
-				(empty($exclude) || !preg_match('/'.$exclude.'/i',$path)))) {
+				(empty($exclude) || !preg_match('/'.$exclude.'/i',$path))) &&
+				(!isset($asset['media']) || in_array($asset['media'],array('all','screen')))) {
 				// check if one of our combined files was changed (mtime)
 				$hash_key.=$path.filemtime($path);
-				$stack[] = $path;
+				$slots[1][] = $path;
 			} else
-				$out[] = $asset;
+				$slots[2][] = $asset;
 		}
-		if (!empty($stack)) {
+		if (!empty($slots[1])) {
 			$filepath = $public_path.$this->f3->hash($hash_key).'.'.$type;
 			if (!is_dir($public_path))
 				mkdir($public_path,0777,true);
 			$content = array();
 			if (!is_file($filepath)) {
-				foreach($stack as $path) {
+				foreach($slots[1] as $path) {
 					$data = $this->f3->read($path);
 					if ($type=='css')
 						$data = $this->fixRelativePaths($data,
@@ -245,20 +256,20 @@ class Assets extends Prefab {
 				$this->f3->write($filepath,
 					implode(($type=='js'?';':'')."\n",$content));
 			}
-			array_unshift($out,array(
+			$slots[1] = array(array(
 				'path'=>$filepath,
 				'type'=>$type,
 				'origin'=>'internal'
 				));
 		}
-		if (!empty($inline_stack)) {
-			$out[] = array(
-				'data'=>implode($inline_stack),
+		if (!empty($slots[3])) {
+			$slots[3] = array(array(
+				'data'=>implode($slots[3]),
 				'type'=>$type,
 				'origin'=>'inline'
-			);
+			));
 		}
-		return array_merge($pre,$out);
+		return array_merge($slots[0],$slots[1],$slots[2],$slots[3]);
 	}
 
 	/**
@@ -379,7 +390,7 @@ class Assets extends Prefab {
 		}
 		foreach ($this->f3->split($this->f3->get('UI')) as $dir)
 			if (is_file($view=$this->f3->fixslashes($dir.$path))) {
-				$asset['path']=$view;
+				$asset['path']=ltrim($view,'./');
 				$asset['origin']='internal';
 				$this->assets[$group][$type][$priority][]=$asset;
 				return;
