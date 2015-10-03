@@ -349,7 +349,7 @@ class Assets extends Prefab {
 		$f3=$this->f3;
 		$base=$f3->get('BASE');
 		$out = preg_replace_callback(
-			'/\b(?<=url)\((?:([\"\']?)(.+?)\1)\)/s',
+			'/\b(?<=url)\((?:([\"\']?)(.+?)((\?.*?)?)\1)\)/s',
 			function($url) use($path,$f3,$base) {
 				// Ignore absolute URLs
 				if (preg_match('/https?:/',$url[2]) ||
@@ -359,7 +359,7 @@ class Assets extends Prefab {
 				// TODO: maybe build full relative paths?
 				return '('.$url[1].preg_replace(
 					'/'.preg_quote($f3->fixslashes($_SERVER['DOCUMENT_ROOT']).$base.'/','/').'(.+)/',
-					'\1',$base.'/'.$f3->fixslashes($rPath)
+					'\1',$base.'/'.$f3->fixslashes($rPath).(isset($url[4])?$url[4]:'')
 				).$url[1].')';
 			},$content);
 		return $out;
