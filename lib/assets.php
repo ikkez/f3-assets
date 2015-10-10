@@ -10,8 +10,8 @@
  *	Copyright (c) 2015 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 0.9.4
- *	@date: 08.09.2015
+ *	@version: 0.9.5
+ *	@date: 10.10.2015
  *	@since: 08.08.2014
  *
  **/
@@ -63,23 +63,26 @@ class Assets extends Prefab {
 			if ($f3->devoid('ASSETS.minify.public_path'))
 				$f3->copy('ASSETS.public_path','ASSETS.minify.public_path');
 		}
+		$self = $this;
 		$this->formatter=array(
-			'js'=>function($asset) use($f3){
+			'js'=>function($asset) use($f3,$self){
 				if ($asset['origin']=='inline')
 					return sprintf('<script>%s</script>',$asset['data']);
 				$path = $asset['path'];
-				$mtime = $f3->get('ASSETS.timestamps') && is_file($path) ? '?'.filemtime($path) : '';
+				$mtime = $f3->get('ASSETS.timestamps') && $asset['origin']!='external' 
+					&& is_file($path) ? '?'.filemtime($path) : '';
 				unset($asset['path'],$asset['origin'],$asset['type'],$asset['exclude']);
-				$params=$this->resolveAttr($asset+array('src'=>$path.$mtime));
+				$params=$self->resolveAttr($asset+array('src'=>$path.$mtime));
 				return sprintf('<script%s></script>',$params);
 			},
-			'css'=>function($asset) use($f3) {
+			'css'=>function($asset) use($f3,$self) {
 				if ($asset['origin']=='inline')
 					return sprintf('<style type="text/css">%s</style>',$asset['data']);
 				$path = $asset['path'];
-				$mtime = $f3->get('ASSETS.timestamps') && is_file($path) ? '?'.filemtime($path) : '';
+				$mtime = $f3->get('ASSETS.timestamps') && $asset['origin']!='external' 
+					&& is_file($path) ? '?'.filemtime($path) : '';
 				unset($asset['path'],$asset['origin'],$asset['type'],$asset['exclude']);
-				$params=$this->resolveAttr($asset+array(
+				$params=$self->resolveAttr($asset+array(
 					'rel'=>'stylesheet',
 					'type'=>'text/css',
 					'href'=>$path.$mtime,
@@ -102,12 +105,11 @@ class Assets extends Prefab {
 			$this->template->extend('link', 'Assets::renderLinkCSSTag');
 			$this->template->extend('style', 'Assets::renderStyleTag');
 		}
-		$this->template->afterrender(function($data) use ($f3) {
-			$assets = \Assets::instance();
-			foreach($assets->getGroups() as $group)
+		$this->template->afterrender(function($data) use ($f3, $self) {
+			foreach($self->getGroups() as $group)
 				if (preg_match('<!--\s*assets-'.$group.'+\s*-->',$data))
 					$data = preg_replace('/(\s*<!--\s*assets-'.$group.'+\s*-->\s*)/i',
-						$assets->renderGroup($assets->getAssets($group)), $data, 1);
+						$self->renderGroup($self->getAssets($group)), $data, 1);
 			return $data;
 		});
 	}
@@ -187,7 +189,7 @@ class Assets extends Prefab {
 	 * @param array $assets
 	 * @return string
 	 */
-	protected function renderGroup($assets) {
+	public function renderGroup($assets) {
 		$out = array();
 		foreach($assets as $asset_type=>$collection) {
 			if ($this->f3->exists('ASSETS.filter.'.$asset_type,$filters)) {
