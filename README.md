@@ -1,5 +1,9 @@
-# Sugar Assets
-This is a CSS / JS Assets Management plugin for the [PHP Fat-Free Framework](https://github.com/bcosca/fatfree).
+# Sugar Assets Demo App
+To init the demo within [bcosca/fatfree-dev](https://github.com/bcosca/fatfree/tree/dev), add:
 
-## Demo and Details: [f3.ikkez.de/assets](http://f3.ikkez.de/assets).
+```php
+$f3->concat('AUTOLOAD',',Assets/src/lib/');
+$f3->concat('AUTOLOAD',',Assets/demo/');
+\AssetsApp::init();
+```
 
