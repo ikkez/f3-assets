@@ -1,0 +1,44 @@
+<h2>Slider Plugin</h2>
+
+<div class="row">
+	<div class="col-md-8">
+		<p>This is a page with a slider plugin. The <a href="http://kenwheeler.github.io/slick/" target="_blank">slick slider</a> plugin is encapsulated in its own little template, which was included on this page like this:</p>
+		<pre class="language-markup"><code><ignore>
+&lt;div class=&quot;col-md-6&quot;&gt;
+	&lt;F3:set slides=&quot;{{ array('Great.','Awesome.','Yeees!') }}&quot; /&gt;
+	&lt;F3:include href=&quot;templates/slider.html&quot; with=&quot;slides={{@slides}}&quot; /&gt;
+&lt;/div&gt;</ignore></code></pre>
+
+		<p>The interesting part happens in the <code>slider.html</code> file, where the assets were defined, that are needed for this frontend widget.</p>
+<pre class="language-markup"><code><ignore>
+&lt;F3:asset src=&quot;plugin/slick/slick.js&quot; /&gt;
+&lt;F3:asset src=&quot;plugin/slick/slick.css&quot; /&gt;
+&lt;F3:asset src=&quot;plugin/slick/slick-theme.css&quot; /&gt;
+&lt;div class=&quot;slider&quot;&gt;
+	&lt;F3:repeat group=&quot;{{@slides}}&quot; value=&quot;{{@text}}&quot; counter=&quot;{{@i}}&quot;&gt;
+		&lt;div&gt;
+			&lt;div class=&quot;inner&quot;&gt;
+				&lt;h3&gt;Slide {{ @i }}&lt;/h3&gt;
+				&lt;p&gt;{{ @text }}&lt;/p&gt;
+			&lt;/div&gt;
+		&lt;/div&gt;
+	&lt;/F3:repeat&gt;
+&lt;/div&gt;
+</ignore></code></pre>
+		<p>That way, the required JS and CSS files are only loaded on this page.
+			Even if you include that sub-template multiple times, the asset dependencies are only included once.</p>
+		<p>If you check the source of this page, you will also notice that these widget assets were not merged into the big global CSS or JS file, but only minified.</p>
+<pre class="language-markup"><code><ignore>
+&lt;script src=&quot;ui-assets/compressed/t5zyg63u7ogk.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;ui-assets/compressed/slick.min.js&quot;&gt;&lt;/script&gt;</ignore></code></pre>
+		<p>This is due to my current configuration, where I've set to skip all files from merging within my <code>ui/plugin/</code> directory. It has the advantage that the big global combined file will not change from page to page, which could cause redundant loading of your assets content.</p>
+	</div>
+	<div class="col-md-4">
+		<F3:set slides="{{ array('Great.','Awesome.','Yeees!') }}" />
+		<F3:include href="templates/slider.html" with="slides={{@slides}}" />
+		<br/>
+		<hr>
+		<F3:set slides="{{ array('Blue','Red','Green') }}" />
+		<F3:include href="templates/slider.html" with="slides={{@slides}}" />
+	</div>
+</div>

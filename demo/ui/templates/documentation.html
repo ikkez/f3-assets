@@ -1,0 +1,234 @@
+
+<div class="jumbotron">
+	<div class="container">
+		<img src="{{ @UI }}img/candytag.png" class="candy pull-right" alt="Sugar Assets">
+		<h1>Sugar Assets</h1>
+		<p>Documentation & API</p>
+	</div>
+</div>
+
+
+<div class="row">
+	<div class="col-md-8">
+
+		<h2 id="adding-assets">Adding Assets</h2>
+
+		<p>You can do this with the <code>&lt;asset /&gt;</code> template tag (or <code>&lt;F3:asset /&gt;</code>).</p>
+		<p>The tag itself accepts some attributes:</p>
+<pre class="language-markup"><code>
+&lt;F3:asset src=&quot;path/to/file.js&quot; priority=&quot;10&quot; group=&quot;head&quot; type=&quot;js&quot; /&gt;</code></pre>
+
+		<p>The <code>type</code> attribute is optional - the plugin tries to guess the filetype based on your <code>src</code> filename.
+		The <code>group</code> attribute defines, if the asset should go into the html <code>&lt;head&gt;</code> section or to the footer of your <code>&lt;body&gt;</code>.
+		The default way, using this template tag, is to put CSS files into the <strong>head</strong> group, and JS files into the <strong>footer</strong> group.</p>
+
+		<p>Dynamic attributes? No problem:</p>
+<pre class="language-markup"><code><ignore>
+&lt;F3:asset src=&quot;{{ 'css/'.@theme }}&quot; /&gt;</ignore></code></pre>
+
+		<p>There is also the config option <code>ASSETS.greedy</code>. When you set this <var>TRUE</var>, this plugin begins to rewrite all your existing css and js includes (script, style and link tags), so you don't have to change that much in your existing templates (experimental though).</p>
+
+		<p>You can also add files within your controller, see the <a href="{{ @BASE }}assets/documentation#add">add method</a>.</p>
+
+		<h2 id="adding-filters">Adding Filters</h2>
+
+		<p>A filter is used to process a whole asset collection of the <strong>same type</strong>. The plugin comes with two build-in filters: <code>combine</code> and <code>minify</code>. The combine filter will just merge every assets in one group into a single file, and the minify filter just minifies the given file and returns its new file path.</p>
+		<p>You can customize which filters should be used for each file types, with the configuration variables at <code>ASSETS.filter</code>:</p>
+
+<pre class="language-ini"><code>
+[ASSETS]
+filter.js = combine
+filter.css = minify, combine
+</code></pre>
+
+		<p>This setup would only call the combine filter to javascript files, but the minify and the combine filter to css files (in the order that's given). You can also create and add own
+			<a href="{{ @BASE }}assets/documentation#filter">filters</a>.</p> In case you want to skip particular files being processed in a filter, you'll find some general exclude options down below, where you can define a regex pattern. If you just want to exclude some single files, you can also use the <code>exclude</code> tag attribute to define which filters to skip for this asset:
+
+<pre class="language-markup"><code>&lt;F3:asset src=&quot;do/not/minify/this/file.js&quot; exclude=&quot;minify&quot; /&gt;</code></pre>
+
+		<h2 id="configuration">Configuration</h2>
+
+		<p>The Assets plugin stores its configuration in the F3 <code>ASSETS</code> variable. The following settings are available, which you can put in your existing config.ini:</p>
+
+		<pre class="language-ini"><code>
+[ASSETS]
+;# when this is false, you need to manually put the group markers like
+;# &lt;!-- assets-head --&gt; and &lt;!-- assets-footer --&gt; into your template
+;# default: true
+auto_include = true
+
+;# be greedy and also fetch all &lt;link&gt;, &lt;script&gt; and &lt;style&gt; tags
+;# overwise only &lt;asset&gt; tags are processed
+;# default: false
+greedy = true
+
+;# add some filters to the file type renderer
+filter.js = minify, combine
+filter.css = minify, combine
+
+;# a writable public path, where filters can put files (relative to webroot)
+public_path = ui/compressed/
+
+;# combine filter final public path, overwrites .public_path
+;combine.public_path = ui-assets/compressed/
+
+;# exclude certain files from being combined, regex i.e. &quot;.*(\/widgets\/).*&quot;
+combine.exclude = &quot;.*(\/plugin\/).*&quot;
+
+;# minify filter final public path, overwrites .public_path
+;minify.public_path = ui-assets/compressed/
+
+;# exclude files from minification, regex i.e. &quot;.*(.min.).*&quot;
+minify.exclude = &quot;.*(.min.).*&quot;
+
+;# add the mtime to the final resource URI, to aid in asset caching
+;# default: false
+timestamps = true
+
+;# if true, all inline &lt;style&gt; and &lt;script&gt; tags are collected too.
+;# default: false
+;handle_inline = true</code></pre>
+
+		<h4>Details</h4>
+		<ul>
+			<li>
+				<code>ASSETS.auto_include</code><br/>This is true by default and adds <var>body</var> and <var>head</var> tag renderer to place the asset groups at the appropriate locations. That doesn't hurt much, but maybe leads to weird things when rendering two different templates at once, i.e. one html-email and one html-frontend for the client. Toggle this off if you're unsure and call the <a href="{{ @BASE }}assets/documentation#render">render</a> method at the locations of your choice.
+			</li>
+			<li>
+				<code>ASSETS.greedy</code><br/>This option can be seen as a drop-in trigger for existing projects. You don't have to change the way how to add assets, and you don't need to rewrite a thing when you decide to no longer use this plugin. It just tries to fetch everything relevant, but could also lead to some false positives or inefficient compiling.
+			</li>
+			<li>
+				<code>ASSETS.filter</code><br/>You can define all filters for each file type in a sorted array. Each result of a filter is passed into the next filter.
+			</li>
+			<li>
+				<code>ASSETS.public_path</code><br/>We need that path to place newly created files here, which are public accessible. Relative paths in your CSS files are going to be rewritten to fit into that new path. Make sure this directory is writable.
+			</li>
+			<li>
+				<code>ASSETS.combine.exclude</code><br/>It's important to understand that it's maybe better for some files from included sub-templates not to be combined which the other global files. Therefore you can set a regex pattern here to skip those files.
+			</li>
+			<li>
+				<code>ASSETS.minify.exclude</code><br/>Already minified files doesn't really need to be minified again. That would only cost performance and could lead to broken files. That's why we skip <code>.min.</code> files by default.
+			</li>
+			<li>
+				<code>ASSETS.timestamps</code><br/>When you turn this on, all asset paths are appended with their modification time (like <var>j1einyb0jaul.min.css?1438682851</var>. This helps you to deliver the latest changes to your users and work around their browser cache. This is highly recommended.
+			</li>
+			<li>
+				<code>ASSETS.handle_inline</code><br/>If have a to deal with lots of inline styles or scripts (I hope you do not), this option helps you to get them sorted.
+			</li>
+		</ul>
+
+
+
+		<hr>
+		<h2 id="api">API</h2>
+
+		<h3 id="instantiate">Instantiate</h3>
+		<pre class="language-php"><code>$assets = \Assets::instance();</code></pre>
+		<p>
+			When creating the first Asset instance, the plugin will register an <a href="http://fatfreeframework.com/view#afterrender" target="_blank">afterrender</a> callback, that is triggered after template compilation and looks for any placeholders with a syntax like <code>&lt;!-- assets-head --&gt;</code>. Those placeholders will be replaced with the result of collecting and processing the asset files that were registered in the currently used template files or your controller. The Assets plugin uses the <code>ASSETS</code> hive var for its configuration. It's best to load a
+			<a href="http://fatfreeframework.com/framework-variables#ConfigurationFiles" target="_blank">configuration file</a> before initializing this plugin, but you can also change those config options on the fly in your controller or elsewhere.
+		</p>
+
+		<h3 id="add">add <small>add an asset file</small></h3>
+		<pre class="language-php"><code>add( string $path, string $type [, string $group='head' [, int $priority=5 ]]);</code></pre>
+		<p>
+			This adds a file to a render group. The <code>$path</code> filepath should be relative to an existing path defined in your
+			<a class="label label-info" href="http://fatfreeframework.com/quick-reference#UI" target="_blank">UI</a> system variable <strong>OR</strong> can be an absolute external URI. If the internal file was not found, the <code>ASSETS.onFileNotFound</code> handler is called.
+		</p>
+
+		<p>With the <code>type</code> parameter, you can set the file type of the asset file. Usually this value is either <var>css</var> or <var>js</var>.</p>
+
+		<p>The <code>group</code> parameter is used to allocate assets a specific section of your html document. The two default groups are <strong>head</strong> and <strong>footer</strong>. The <var>head</var> group is located at the bottom of the <code>&lt;head&gt;</code> element in your html document and the is the recommended option for all CSS assets. The <var>footer</var> group is located at the bottom of the <code>&lt;body&gt;</code> element, and should be used for most JS assets files.</p>
+		<p>You can also add own groups. Therefore just place the appropriate group placeholder into your template, like <code>&lt;!-- assets-groupname --&gt;</code>, to render your custom group, or check the <a href="{{ @BASE }}assets/documentation#render">render method</a>.</p>
+
+		<p>Files are sorted in each group by a numeric <code>priority</code> value, from high priority to low, <code>0</code> being the lowest priority. All asset files can use the same priority value, so you do not need to give every file a unique priority.</p>
+
+
+<pre class="language-php"><code>$assets = \Assets::instance();
+$assets-&gt;add('css/style.css','css','head');
+$assets-&gt;add('foo/bar/main.js','js','footer');</code></pre>
+
+		<h3 id="addJs">addJs <small>add a javascript asset</small></h3>
+		<pre class="language-php"><code>addJs( string $path [, int $priority=5 [, string $group='footer' ]]);</code></pre>
+
+		<p>This method is a little shortcut to the <a href="{{ @BASE }}assets/documentation#add">add</a> method, including defaults for javascript files.</p>
+
+<pre class="language-php"><code>$assets = \Assets::instance();
+$assets-&gt;addJs('vendor/bootstrap.min.js');
+$assets-&gt;addJs('http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js',8);</code></pre>
+
+<h3 id="addCss">addCss <small>add a stylesheet asset</small></h3>
+		<pre class="language-php"><code>addCss( string $path [, int $priority=5 [, string $group='head' ]]);</code></pre>
+
+		<p>This method is a little shortcut to the <a href="{{ @BASE }}assets/documentation#add">add</a> method, including defaults for stylesheet files.</p>
+
+<pre class="language-php"><code>$assets = \Assets::instance();
+$assets-&gt;addCss('//fonts.googleapis.com/css?family=Roboto:400,500');
+$assets-&gt;addCss('css/main.css',1);</code></pre>
+
+
+<h3 id="addInline">addInline <small>add inline asset</small></h3>
+		<pre class="language-php"><code>addInline( string $path, string $type [, string $group='head' ]);</code></pre>
+
+		<p>This method adds some inline stylesheet or javascript code to the page.</p>
+
+<pre class="language-php"><code>$assets = \Assets::instance();
+$assets-&gt;addInline('body { background: #f00 !important; }','css');
+$assets-&gt;addInline('alert(123);','js');</code></pre>
+
+
+		<h3 id="getAssets">getAssets <small>get sorted, unique assets from group</small></h3>
+		<pre class="language-php"><code>getAssets([ string $group="head" [, $type=NULL ]]);</code></pre>
+
+		<p>This returns an assoc array, keyed by file type, each including an array of sorted assets that belong to this group.</p>
+
+		<h3 id="getGroups">getGroups <small>get all defined groups</small></h3>
+		<pre class="language-php"><code>getGroups();</code></pre>
+
+		<p>Simply returns an array of all used groups.</p>
+
+		<h3 id="render">render <small>return placeholder for pending afterrender event</small></h3>
+		<pre class="language-php"><code>render([ string $group='head' ]);</code></pre>
+
+		<p>When you are using the View or Preview template engines, you might find it more useful to put php code into your templates, or when you have the <code>ASSETS.auto_include</code> option disabled. To add the assets group manually to your templates, you can use this:</p>
+
+<pre class="language-php"><code><ignore>{{ \Assets::instance()-&gt;render('footer'); }}</ignore></code></pre>
+
+
+		<h3 id="reset">reset <small>reset file groups</small></h3>
+		<pre class="language-php"><code>reset();</code></pre>
+
+		<p>In case you render multiple different templates, you can call this reset function to clear the assets collector once before rendering the next template.</p>
+
+		<h3 id="clear">clear <small>delete all css and js files in temp dir</small></h3>
+		<pre class="language-php"><code>clear();</code></pre>
+
+		<p>If you want to remove all temporary files that were generated, just call this method to initiate regeneration of them.</p>
+
+		<h3 id="formatter">formatter <small>set custom type formatter</small></h3>
+		<pre class="language-php"><code>formatter( string $type, string|callback $func);</code></pre>
+
+		<p>A formatter is used to render one single asset of the given <code>$type</code>. You can use this method to extend the renderer for processing file types different from the defaults (js/css). The callback method receives one parameter <code>$asset</code>, being an array with <var>path</var>, <var>type</var>, <var>origin</var> and <var>data</var> keys, and should return a string.</p>
+
+		<h3 id="filter">filter <small>set custom group filter</small></h3>
+		<pre class="language-php"><code>filter( string $name, string|callback $func);</code></pre>
+
+		<p>Custom filters are great to extend this plugins capabilities. In example, you could prepend a LESS or SASS filter, or append a filter that uploads your assets to a CDN and replaces the needed file paths on the fly.</p>
+
+<pre class="language-php"><code>$assets = \Assets::instance();
+$assets-&gt;filter('less','\Helpers->renderLESS');
+$assets-&gt;filter('cloud',function($collection){
+	foreach($collection as $asset) {
+		// add magic
+	}
+	return $collection;
+});</code></pre>
+
+
+
+	</div>
+	<div class="col-md-4">
+
+	</div>
+
+</div>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html class="no-js" lang="">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<title>F3 Sugar Assets Management Plugin</title>
+	<base href="{{ @SCHEME.'://'.@HOST.(!@PORT||@PORT==80||@PORT==443?'':':'.@PORT).@BASE.'/' }}" />
+	<link rel="shortcut icon" href="{{@UI}}img/candytag.ico" type="image/x-icon">
+	<meta name="description" content="This Plugin for PHP Fat-Free Framework helps you to handle all your JS / CSS asset files">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<F3:asset src="{{ 'css/'.@theme }}" />
+	<F3:asset src="css/font-awesome.min.css">
+	<F3:asset src="css/prism.css" />
+	<F3:asset src="css/main.css" priority="1">
+	<F3:asset src="js/vendor/modernizr-2.8.3.min.js" group="head" />
+</head>
+<body>
+	<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#main-menu" aria-expanded="false">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="{{ @REALM }}">
+					F3 Assets Plugin</a>
+			</div>
+			<div class="collapse navbar-collapse" id="main-menu">
+				<ul class="nav navbar-nav">
+					<li {{@page=="home"?'class="active"':''}}><a href="assets">Home</a></li>
+					<li {{@page=="documentation"?'class="active"':''}}><a href="assets/documentation">Documentation</a></li>
+					<li {{@page=="widget"?'class="active"':''}}><a href="assets/widget">Widget Page</a></li>
+				</ul>
+				<ul class="nav navbar-nav navbar-right">
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Change Theme <span class="caret"></span></a>
+						<ul class="dropdown-menu">
+							<li><a href="{{@BASE.@PATH}}?theme=">bootstrap</a></li>
+							<li><a href="{{@BASE.@PATH}}?theme=sandstone">sandstone</a></li>
+							<li><a href="{{@BASE.@PATH}}?theme=yeti">yeti</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+
+	<div class="container">
+
+		<F3:include if="{{ @page }}" href="{{ 'templates/'.@page.'.html' }}" />
+		<hr>
+
+		<footer>
+			<div class="stats pull-right">{{ 'Page rendered in {0} ms / Memory usage {1} Kibytes',round(1e3*(microtime(TRUE)-$TIME),2),round(memory_get_usage(TRUE)/1e3,1) | format }}</div>
+			<p><i class="fa fa-copyright"></i> 2015 - ikkez, <small class="stats">candy icon by Nherwin Ardoña from the Noun Project</small></p>
+		</footer>
+	</div>
+<F3:asset src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js" priority="10" />
+<F3:asset src="js/vendor/bootstrap.min.js" priority="10" />
+<F3:asset src="js/vendor/prism.js" />
+<F3:asset src="js/main.js" />
+
+</body>
+</html>

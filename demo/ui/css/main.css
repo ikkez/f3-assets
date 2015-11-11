@@ -1,0 +1,51 @@
+/* ==========================================================================
+   Author's custom styles
+   ========================================================================== */
+
+body {
+	padding-top: 80px;
+	padding-bottom: 20px;
+}
+
+.candy {
+    display: inline-block;
+    margin-right: 5px;
+    width: 180px;
+    margin-top: -5px;
+}
+
+.container .jumbotron, .container-fluid .jumbotron {
+	padding: 20px;
+	background: url("../img/diamond_upholstery.png");
+}
+
+.jumbotron h1, .jumbotron .h1 {
+	font-size: 40px;
+}
+
+.jumbotron p {
+	font-size: 21px;
+}
+
+.stats {
+	font-size: 12px;
+	color: #999999;
+}
+
+pre  {
+	/*background: #272822 !important;*/
+}
+
+.slider .inner {
+    min-height: 160px;
+}
+
+ul.key-facts {
+    padding-left: 20px;
+}
+
+var.label {
+    font-style: normal;
+    font-weight: bold;
+    font-size: 13px;
+}

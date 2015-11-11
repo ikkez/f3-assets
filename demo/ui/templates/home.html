@@ -1,0 +1,108 @@
+<div class="jumbotron">
+	<div class="container">
+		<img src="{{ @UI }}img/candytag.png" class="candy pull-right" alt="Sugar Assets">
+		<h1> Sugar CSS/JS Assets. Yummy!</h1>
+		<p>This is a template utilizing the F3 Sugar Assets plugin for the <a href="http://fatfreeframework.com/" target="_blank" class="">PHP Fat-Free Framework</a>.<br/>
+			It offers simple management and control about your frontend CSS and JS file dependencies.
+			</p>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-8">
+		<h2><i class="fa fa-file-archive-o"></i> Automatic merge and minify</h2>
+		<p>The front-end templates we build today, are mostly full of additional css and javascript libraries from frameworks, plugins or just visual candy.
+			Those front-ends could have a set of multiple files you include in your global layout file, like this:
+		</p>
+		<pre class="language-markup"><code>
+&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;ui/css/bootstrap.min.css&quot; /&gt;
+&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;ui/css/font-awesome.css&quot; /&gt;
+&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;ui/css/main.css&quot; /&gt;</code></pre>
+		<p>Every file is loaded with an additional HTTP request, which could lead to a huge amount of requests the client needs to load the page.
+		Many requests makes the website load longer and increases its rendering time. This plugin helps you to combine and minified them all, which makes your frontend smaller and load faster:</p>
+		<pre class="language-markup"><code>&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;ui/compressed/3fgbrj1ikdusk.min.css&quot; /&gt;</code></pre>
+
+
+		<h3><i class="fa fa-code"></i> Simply add files</h3>
+
+		<p>It fully supports the F3-Template engine, but also works with raw php templates or within your controller.
+			To add an assets from the inside of your template, you can use the fancy new asset tag.</p>
+
+		<pre class="language-markup"><code>&lt;F3:asset src=&quot;js/vendor/bootstrap.min.js&quot; priority=&quot;10&quot; /&gt;</code></pre>
+
+		<p>This way, you can also add CSS/JS files to the <code>&lt;head&gt;</code> section for your template, <strong>from the inside of included sub-templates</strong>. See the
+			<a href="assets/widget">widget page</a> for a demo.</p>
+		<p>All assets that were added to template this way, are collected into groups for being displayed in your HTML document.
+			These can then be combined to a single file and stripped of superfluous whitespaces and comments.
+		With additional attributes and configuration, you can control the load order and what to skip, minify or merge together.</p>
+
+		<p><a class="btn btn-default btn-sm" href="assets/documentation" role="button">View details &raquo;</a></p>
+
+		<h3><i class="fa fa-plug"></i> Easy installation, you could even do it while you're drunk.</h3>
+
+		<p></p>
+
+		<ol>
+			<li>
+				<p>Just <a href="https://github.com/ikkez/f3-assets/archive/master.zip"><i class="fa fa-download"></i> download</a> the package, or require it with composer:<br/><code>composer require ikkez/f3-assets:dev-master</code>
+				</p>
+			</li>
+			<li>
+				<p>Initialize the asset manager with a simple <code>\Assets::instance();</code> call in your <em>index.php</em> file or controller.
+				</p>
+			</li>
+			<li>
+				<p>Add some <a href="assets/documentation#configuration">configuration</a>, make the public path writable and <a href="assets/documentation#adding-assets">bind your assets to the templates</a>.
+				</p>
+			</li>
+			<li>
+				<p>Done. Enjoy a cold beer and maybe <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=44UHPNUCVP7QG" target="_blank">donate</a> another one to me. Cheers.
+				</p>
+			</li>
+		</ol>
+		<p></p>
+
+	</div>
+	<div class="col-md-4">
+
+		<div class="thumbnail">
+			<img src="http://lorempixel.com/g/400/200/technics/4/" alt="lorempixel">
+			<div class="caption">
+				<h3>Lots of goodies included</h3>
+				<ul class="key-facts">
+					<li>
+						Supports <var class="label label-info">UI</var> split var for easy theming
+					</li>
+					<li>
+						Checks for modified files and only recompile if needed
+					</li>
+					<li>
+						Configurable filters, paths and excludes
+					</li>
+					<li>
+						Customizable with own type formatter and group filters
+					</li>
+					<li>
+						Keeps your CSS file paths working
+					</li>
+					<li>
+						Can also collect on-page styles and scripts
+					</li>
+					<li>
+						Tastes good!
+					</li>
+				</ul>
+
+				<p>
+					<a href="https://github.com/ikkez/f3-assets/archive/master.zip" class="btn btn-info" role="button"><i class="fa fa-download"></i> download</a>
+					<a href="https://github.com/ikkez/f3-assets/" class="btn btn-default" role="button"><i class="fa fa-github"></i> github</a>
+				</p>
+			</div>
+		</div>
+
+
+
+
+
+	</div>
+</div>
