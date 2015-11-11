@@ -52,7 +52,7 @@ class Assets extends Prefab {
 			'handle_inline'=>false,
 			'timestamps'=>false,
 			'onFileNotFound'=>null,
-			'append_base'=>false //Add Base Url to assets
+			'prepend_base'=>false //Add Base Url to assets
 		);
 		// merge options with defaults
 		$f3->set('ASSETS',$f3->exists('ASSETS',$opt) ?
@@ -72,7 +72,7 @@ class Assets extends Prefab {
 				$path = $asset['path'];
 				$mtime = $f3->get('ASSETS.timestamps') && $asset['origin']!='external' 
 					&& is_file($path) ? '?'.filemtime($path) : '';
-				$base = $f3->get('ASSETS.append_base') && $asset['origin']!='external' 
+				$base = $f3->get('ASSETS.prepend_base') && $asset['origin']!='external' 
 					&& is_file($path) ? $f3->get('BASE').'/': '';
 				unset($asset['path'],$asset['origin'],$asset['type'],$asset['exclude']);
 				$params=$self->resolveAttr($asset+array('src'=>$base.$path.$mtime));
@@ -84,7 +84,7 @@ class Assets extends Prefab {
 				$path = $asset['path'];
 				$mtime = $f3->get('ASSETS.timestamps') && $asset['origin']!='external' 
 					&& is_file($path) ? '?'.filemtime($path) : '';
-				$base = $f3->get('ASSETS.append_base') && $asset['origin']!='external' 
+				$base = $f3->get('ASSETS.prepend_base') && $asset['origin']!='external' 
 					&& is_file($path) ? $f3->get('BASE').'/': '';
 				unset($asset['path'],$asset['origin'],$asset['type'],$asset['exclude']);
 				$params=$self->resolveAttr($asset+array(
