@@ -216,7 +216,7 @@ class Assets extends Prefab {
 	 * @return array
 	 */
 	public function combine($collection) {
-		if($timeout = $this->f3->get('ASSETS.timeout') > -1)
+		if(($timeout = $this->f3->get('ASSETS.timeout')) > -1)
 			set_time_limit($timeout);
 		
 		$public_path = $this->f3->get('ASSETS.combine.public_path');
@@ -289,7 +289,7 @@ class Assets extends Prefab {
 	 * @return mixed
 	 */
 	public function minify($collection) {
-		if($timeout = $this->f3->get('ASSETS.timeout') > -1)
+		if(($timeout = $this->f3->get('ASSETS.timeout')) > -1)
 			set_time_limit($timeout);
 			
 		$web = \Web::instance();
