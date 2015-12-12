@@ -52,7 +52,7 @@ class Assets extends Prefab {
 			'handle_inline'=>false,
 			'timestamps'=>false,
 			'onFileNotFound'=>null,
-			'prepend_base'=>false //Add Base Url to assets
+			'prepend_base'=>false
 		);
 		// merge options with defaults
 		$f3->set('ASSETS',$f3->exists('ASSETS',$opt) ?
