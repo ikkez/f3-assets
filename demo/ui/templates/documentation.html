@@ -87,7 +87,11 @@ timestamps = true
 
 ;# if true, all inline &lt;style&gt; and &lt;script&gt; tags are collected too.
 ;# default: false
-;handle_inline = true</code></pre>
+;handle_inline = true
+
+;# if true, all internal asset paths are prepended by the BASE path
+;# default: false
+;prepend_base = true</code></pre>
 
 		<h4>Details</h4>
 		<ul>
@@ -113,7 +117,10 @@ timestamps = true
 				<code>ASSETS.timestamps</code><br/>When you turn this on, all asset paths are appended with their modification time (like <var>j1einyb0jaul.min.css?1438682851</var>. This helps you to deliver the latest changes to your users and work around their browser cache. This is highly recommended.
 			</li>
 			<li>
-				<code>ASSETS.handle_inline</code><br/>If have a to deal with lots of inline styles or scripts (I hope you do not), this option helps you to get them sorted.
+				<code>ASSETS.handle_inline</code><br/>If you have a to deal with lots of inline styles or scripts (I hope you do not), this option helps you to get them sorted.
+			</li>
+			<li>
+				<code>ASSETS.prepend_base</code><br/>Usually the final paths returned are only relative to your F3 directory. This is sufficient when your app lives on the web root or you use a &lt;base&gt;-Tag in your html markup. In case you need the full relative web root path added to the file paths, switch this setting to TRUE.
 			</li>
 		</ul>
 
