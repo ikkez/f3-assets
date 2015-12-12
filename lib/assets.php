@@ -10,8 +10,8 @@
  *	Copyright (c) 2015 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 0.9.5
- *	@date: 10.10.2015
+ *	@version: 0.9.6
+ *	@date: 12.12.2015
  *	@since: 08.08.2014
  *
  **/
@@ -69,28 +69,22 @@ class Assets extends Prefab {
 			'js'=>function($asset) use($f3,$self){
 				if ($asset['origin']=='inline')
 					return sprintf('<script>%s</script>',$asset['data']);
+				else
+					$asset['charset']=$f3->get('ENCODING');
 				$path = $asset['path'];
-				$mtime = $f3->get('ASSETS.timestamps') && $asset['origin']!='external' 
-					&& is_file($path) ? '?'.filemtime($path) : '';
-				$base = $f3->get('ASSETS.prepend_base') && $asset['origin']!='external' 
-					&& is_file($path) ? $f3->get('BASE').'/': '';
 				unset($asset['path'],$asset['origin'],$asset['type'],$asset['exclude']);
-				$params=$self->resolveAttr($asset+array('src'=>$base.$path.$mtime));
+				$params=$self->resolveAttr($asset+array('src'=>$path));
 				return sprintf('<script%s></script>',$params);
 			},
 			'css'=>function($asset) use($f3,$self) {
 				if ($asset['origin']=='inline')
 					return sprintf('<style type="text/css">%s</style>',$asset['data']);
 				$path = $asset['path'];
-				$mtime = $f3->get('ASSETS.timestamps') && $asset['origin']!='external' 
-					&& is_file($path) ? '?'.filemtime($path) : '';
-				$base = $f3->get('ASSETS.prepend_base') && $asset['origin']!='external' 
-					&& is_file($path) ? $f3->get('BASE').'/': '';
 				unset($asset['path'],$asset['origin'],$asset['type'],$asset['exclude']);
 				$params=$self->resolveAttr($asset+array(
 					'rel'=>'stylesheet',
 					'type'=>'text/css',
-					'href'=>$base.$path.$mtime,
+					'href'=>$path,
 				));
 				return sprintf('<link%s/>',$params);
 			}
@@ -200,11 +194,19 @@ class Assets extends Prefab {
 			if ($this->f3->exists('ASSETS.filter.'.$asset_type,$filters)) {
 				if (is_string($filters))
 					$filters = $this->f3->split($filters);
-				$filters = array_values(array_intersect_key($this->filter, array_flip($filters)));
+				$flist=array_flip($filters);
+				$filters = array_values(array_intersect_key(array_replace($flist, $this->filter), $flist));
 				$collection = $this->f3->relay($filters,array($collection));
 			}
-			foreach($collection as $asset)
+			foreach($collection as $asset) {
+				$path = $asset['path'];
+				$mtime = ($this->f3->get('ASSETS.timestamps') && $asset['origin']!='external'
+					&& is_file($path)) ? '?'.filemtime($path) : '';
+				$base = ($this->f3->get('ASSETS.prepend_base') && $asset['origin']!='external'
+					&& is_file($path)) ? $this->f3->get('BASE').'/': '';
+				$asset['path'] = $base.$path.$mtime;
 				$out[]=$this->f3->call($this->formatter[$asset_type],array($asset));
+			}
 		}
 		return "\n\t".implode("\n\t",$out)."\n";
 	}
