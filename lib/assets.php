@@ -7,11 +7,11 @@
  *	compliance with the license. Any of the license terms and conditions
  *	can be waived if you get permission from the copyright holder.
  *
- *	Copyright (c) 2015 ~ ikkez
+ *	Copyright (c) 2016 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 0.9.6
- *	@date: 12.12.2015
+ *	@version: 1.0.0-rc1
+ *	@date: 06.11.2016
  *	@since: 08.08.2014
  *
  **/
@@ -44,10 +44,18 @@ class Assets extends Prefab {
 			'combine'=>array(
 				'public_path'=>'',
 				'exclude'=>'',
+				'slots'=>array(
+					10=>'top',
+					20=>'external',
+					40=>'internal',
+					60=>'excluded',
+					80=>'inline'
+				),
 			),
 			'minify'=>array(
 				'public_path'=>'',
 				'exclude'=>'.*(.min.).*',
+				'inline'=>false,
 			),
 			'handle_inline'=>false,
 			'timestamps'=>false,
@@ -56,7 +64,7 @@ class Assets extends Prefab {
 		);
 		// merge options with defaults
 		$f3->set('ASSETS',$f3->exists('ASSETS',$opt) ?
-			$opt+$opt_defaults : $opt_defaults);
+			array_replace_recursive($opt_defaults,$opt) : $opt_defaults);
 		// propagate default public temp dir
 		if (!$f3->devoid('ASSETS.public_path')) {
 			if ($f3->devoid('ASSETS.combine.public_path'))
@@ -72,7 +80,8 @@ class Assets extends Prefab {
 				else
 					$asset['charset']=$f3->get('ENCODING');
 				$path = $asset['path'];
-				unset($asset['path'],$asset['origin'],$asset['type'],$asset['exclude']);
+				unset($asset['path'],$asset['origin'],$asset['type'],
+					$asset['exclude'],$asset['slot']);
 				$params=$self->resolveAttr($asset+array('src'=>$path));
 				return sprintf('<script%s></script>',$params);
 			},
@@ -80,7 +89,8 @@ class Assets extends Prefab {
 				if ($asset['origin']=='inline')
 					return sprintf('<style type="text/css">%s</style>',$asset['data']);
 				$path = $asset['path'];
-				unset($asset['path'],$asset['origin'],$asset['type'],$asset['exclude']);
+				unset($asset['path'],$asset['origin'],$asset['type'],
+					$asset['exclude'],$asset['slot']);
 				$params=$self->resolveAttr($asset+array(
 					'rel'=>'stylesheet',
 					'type'=>'text/css',
@@ -199,12 +209,14 @@ class Assets extends Prefab {
 				$collection = $this->f3->relay($filters,array($collection));
 			}
 			foreach($collection as $asset) {
-				$path = $asset['path'];
-				$mtime = ($this->f3->get('ASSETS.timestamps') && $asset['origin']!='external'
-					&& is_file($path)) ? '?'.filemtime($path) : '';
-				$base = ($this->f3->get('ASSETS.prepend_base') && $asset['origin']!='external'
-					&& is_file($path)) ? $this->f3->get('BASE').'/': '';
-				$asset['path'] = $base.$path.$mtime;
+				if (isset($asset['path'])) {
+					$path = $asset['path'];
+					$mtime = ($this->f3->get('ASSETS.timestamps') && $asset['origin']!='external'
+						&& is_file($path)) ? '?'.filemtime($path) : '';
+					$base = ($this->f3->get('ASSETS.prepend_base') && $asset['origin']!='external'
+						&& is_file($path)) ? $this->f3->get('BASE').'/': '';
+					$asset['path'] = $base.$path.$mtime;
+				}
 				$out[]=$this->f3->call($this->formatter[$asset_type],array($asset));
 			}
 		}
@@ -220,65 +232,98 @@ class Assets extends Prefab {
 		$public_path = $this->f3->get('ASSETS.combine.public_path');
 		if (empty($collection) || count($collection) <= 1)
 			return $collection;
-		$type = false;
-		$hash_key = '';
-		$slots=array(
-			0=>array(), // external
-			1=>array(), // internal
-			2=>array(), // excluded
-			3=>array(), // inline
-		);
+		$cfs=$this->f3->get('ASSETS.combine.slots');
+		$slots=array_fill_keys(array_keys($cfs),array());
+		$sn=array_flip($cfs);
+		// sort to slots
+		$exclude = $this->f3->get('ASSETS.combine.exclude');
 		foreach($collection as $i=>$asset) {
-			$type = $asset['type'];
+			$a_slot = isset($asset['slot']) ? $asset['slot'] : NULL;
+			// auto-create slot
+			if ($a_slot && !isset($sn[$a_slot])) {
+				$i=50;
+				while (isset($slots[$i]))
+					$i++;
+				$slots[$i]=array();
+				$sn[$a_slot]=$i;
+			}
+			// inline
 			if ($asset['origin']=='inline') {
-				$slots[3][] = $asset['data'];
+				$slots[$sn[$a_slot?:'inline']][] = $asset;
 				continue;
 			}
-			$path = $asset['path'];
-			$exclude = $this->f3->get('ASSETS.combine.exclude');
-			if ($asset['origin']=='external')
-				$slots[0][] = $asset;
-			elseif (is_file($path) && (
+			// external
+			if ($asset['origin']=='external') {
+				$slots[$sn[$a_slot?:'external']][]=$asset;
+			} // internal
+			elseif (is_file($asset['path']) && (
 				(!isset($asset['exclude']) ||
 					!in_array('combine',$this->f3->split($asset['exclude']))) &&
-				(empty($exclude) || !preg_match('/'.$exclude.'/i',$path))) &&
+				(empty($exclude) || !preg_match('/'.$exclude.'/i',$asset['path']))) &&
 				(!isset($asset['media']) || in_array($asset['media'],array('all','screen')))) {
-				// check if one of our combined files was changed (mtime)
-				$hash_key.=$path.filemtime($path);
-				$slots[1][] = $path;
+				$slots[$sn[$a_slot?:'internal']][] = $asset;
 			} else
-				$slots[2][] = $asset;
+				// excluded internal
+				$slots[$sn[$a_slot?:'excluded']][] = $asset;
 		}
-		if (!empty($slots[1])) {
-			$filepath = $public_path.$this->f3->hash($hash_key).'.'.$type;
-			if (!is_dir($public_path))
-				mkdir($public_path,0777,true);
-			$content = array();
-			if (!is_file($filepath)) {
-				foreach($slots[1] as $path) {
-					$data = $this->f3->read($path);
-					if ($type=='css')
-						$data = $this->fixRelativePaths($data,
-							pathinfo($path,PATHINFO_DIRNAME).'/');
-					$content[] = $data;
+		// proceed slots
+		ksort($slots);
+		$out = array();
+		foreach ($slots as $assets) {
+			$internal=array();
+			$inline=array();
+			$hash_key=array();
+			// categorize per slot
+			foreach ($assets as $asset) {
+				if ($asset['origin']=='internal') {
+					$internal[$asset['type']][] = $asset;
+					// check if one of our combined files was changed (mtime)
+					if (!isset($hash_key[$asset['type']]))
+						$hash_key[$asset['type']]='';
+					$hash_key[$asset['type']].=$asset['path'].filemtime($asset['path']);
 				}
-				$this->f3->write($filepath,
-					implode(($type=='js'?';':'')."\n",$content));
+				elseif ($asset['origin']=='external')
+					$out[] = $asset;
+				elseif ($asset['origin']=='inline')
+					$inline[$asset['type']][] = $asset['data'];
 			}
-			$slots[1] = array(array(
-				'path'=>$filepath,
-				'type'=>$type,
-				'origin'=>'internal'
-				));
+			// combine internals to one file
+			if (!empty($internal)) {
+				foreach ($internal as $type => $int_a) {
+					$filepath = $public_path.$this->f3->hash($hash_key[$type]).'.'.$type;
+					if (!is_dir($public_path))
+						mkdir($public_path,0777,true);
+					$content = array();
+					if (!is_file($filepath)) {
+						foreach($int_a as $asset) {
+							$data = $this->f3->read($asset['path']);
+							if ($type=='css')
+								$data = $this->fixRelativePaths($data,
+									pathinfo($asset['path'],PATHINFO_DIRNAME).'/');
+							$content[] = $data;
+						}
+						$this->f3->write($filepath,
+							implode(($type=='js'?';':'')."\n",$content));
+					}
+					$out[] = array(
+						'path'=>$filepath,
+						'type'=>$type,
+						'origin'=>'internal'
+					);
+				}
+			}
+			// combine inline
+			if (!empty($inline)) {
+				foreach ($inline as $type => $inl_a) {
+					$out[] = array(
+						'data'=>implode($inl_a),
+						'type'=>$type,
+						'origin'=>'inline'
+					);
+				}
+			}
 		}
-		if (!empty($slots[3])) {
-			$slots[3] = array(array(
-				'data'=>implode($slots[3]),
-				'type'=>$type,
-				'origin'=>'inline'
-			));
-		}
-		return array_merge($slots[0],$slots[1],$slots[2],$slots[3]);
+		return $out;
 	}
 
 	/**
@@ -297,7 +342,8 @@ class Assets extends Prefab {
 		foreach($collection as $i=>&$asset) {
 			$type = $asset['type'];
 			if ($asset['origin']=='inline') {
-				$inline_stack[] = $asset['data'];
+				$slot = $asset['slot'] ?: 'default';
+				$inline_stack[$slot][] = $asset['data'];
 				unset($collection[$i]);
 				unset($asset);
 				continue;
@@ -328,20 +374,33 @@ class Assets extends Prefab {
 			unset($asset);
 		}
 		if (!empty($inline_stack)) {
-			$data = implode($inline_stack);
-			$hash = $this->f3->hash($data);
-			$filename = $hash.'.min.'.$type;
-			if (!is_file($public_path.$filename)) {
-				$this->f3->write($public_path.$filename,$data);
-				$min = $web->minify($filename,null,false,
-					$public_path);
-				$this->f3->write($public_path.$filename,$min);
+			foreach ($inline_stack as $slotGroup=>$inlineData) {
+				$data = implode($inlineData);
+				if ($this->f3->get('ASSETS.minify.inline')) {
+					// this is probably pretty slow
+					$hash = $this->f3->hash($data);
+					$filename = $hash.'.min.'.$type;
+					if (!is_file($public_path.$filename)) {
+						$this->f3->write($public_path.$filename,$data);
+						$min = $web->minify($filename,null,false,
+							$public_path);
+						$this->f3->write($public_path.$filename,$min);
+					}
+					$collection[] = array(
+						'path'=>$public_path.$filename,
+						'type'=>$type,
+						'origin'=>'internal',
+						'slot'=>$slotGroup,
+					);
+				} else {
+					$collection[] = array(
+						'data'=>$data,
+						'type'=>$type,
+						'origin'=>'inline',
+						'slot'=>$slotGroup,
+					);
+				}
 			}
-			$collection[] = array(
-				'path'=>$public_path.$filename,
-				'type'=>$type,
-				'origin'=>'local'
-			);
 		}
 		return $collection;
 	}
@@ -380,9 +439,10 @@ class Assets extends Prefab {
 	 * @param string $type
 	 * @param string $group
 	 * @param int $priority
+	 * @param string $slot
 	 * @param array $params
 	 */
-	public function add($path,$type,$group='head',$priority=5,$params=null) {
+	public function add($path,$type,$group='head',$priority=5,$slot=null,$params=null) {
 		if (!isset($this->assets[$group]))
 			$this->assets[$group]=array();
 		if (!isset($this->assets[$group][$type]))
@@ -390,6 +450,7 @@ class Assets extends Prefab {
 		$asset = array(
 			'path'=>$path,
 			'type'=>$type,
+			'slot'=>$slot,
 			'origin'=>''
 		) + ($params?:array());
 		if (preg_match('/^(http(s)?:)?\/\/.*/i',$path)) {
@@ -435,8 +496,9 @@ class Assets extends Prefab {
 	 * @param string $content
 	 * @param string $type
 	 * @param string $group
+	 * @param string $slot
 	 */
-	public function addInline($content,$type,$group='head') {
+	public function addInline($content,$type,$group='head',$slot='inline') {
 		if (!isset($this->assets[$group]))
 			$this->assets[$group]=array();
 		if (!isset($this->assets[$group][$type]))
@@ -444,7 +506,8 @@ class Assets extends Prefab {
 		$this->assets[$group][$type][3][]=array(
 			'data'=>$content,
 			'type'=>$type,
-			'origin'=>'inline'
+			'origin'=>'inline',
+			'slot'=>$slot,
 		);
 	}
 
@@ -480,10 +543,14 @@ class Assets extends Prefab {
 					? 'footer' : 'head';
 			if (!isset($node['priority']))
 				$node['priority'] = 5;
+			if (!isset($node['slot']))
+				$node['slot'] = null;
 			$group = $node['group'];
 			$prio = $node['priority'];
-			unset($node['priority'],$node['src'],$node['href'],$node['group'],$node['type']);
-			$this->add($src,$type,$group,$prio,$node);
+			$slot = $node['slot'];
+			unset($node['priority'],$node['src'],$node['href'],
+				$node['group'],$node['type'],$node['slot']);
+			$this->add($src,$type,$group,$prio,$slot,$node);
 		}
 	}
 
@@ -517,11 +584,14 @@ class Assets extends Prefab {
 			if (!isset($params['group']))
 				$params['group'] = ($params['type'] == 'js')
 					? 'footer' : 'head';
+			if (!isset($params['slot']))
+				$params['slot'] = 'inline';
 			if ($this->f3->get('ASSETS.handle_inline'))
 				return '<?php \Assets::instance()->addInline('.
 				'$this->resolve('.(var_export($node,true)).',get_defined_vars()),'.
 				var_export($params['type'],true).','.
-				var_export($params['group'],true).'); ?>';
+				var_export($params['group'],true).','.
+				var_export($params['slot'],true).'); ?>';
 			else
 				// just bypass
 				return $this->f3->call($this->formatter[$params['type']],array(array(
