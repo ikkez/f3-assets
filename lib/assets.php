@@ -150,12 +150,17 @@ class Assets extends Prefab {
 
 	/**
 	 * reset the temporary public path
+	 * @return integer
 	 */
 	public function clear() {
+		$i=0;
 		if ($glob=@glob($this->f3->get('ASSETS.public_path').'*'))
 			foreach ($glob as $file)
-				if (preg_match('/.+?\.(js|css)/i',basename($file)))
+				if (preg_match('/.+?\.(js|css)/i',basename($file))) {
+					$i++;
 					@unlink($file);
+				}
+		return $i;
 	}
 
 	/**
