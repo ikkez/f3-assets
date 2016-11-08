@@ -10,8 +10,8 @@
  *	Copyright (c) 2016 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 1.0.0-rc1
- *	@date: 06.11.2016
+ *	@version: 1.0.0
+ *	@date: 08.11.2016
  *	@since: 08.08.2014
  *
  **/
@@ -481,9 +481,10 @@ class Assets extends Prefab {
 	 * @param string $path
 	 * @param int $priority
 	 * @param string $group
+	 * @param null $slot
 	 */
-	public function addJs($path,$priority=5,$group='footer') {
-		$this->add($path,'js',$group,$priority);
+	public function addJs($path,$priority=5,$group='footer',$slot=null) {
+		$this->add($path,'js',$group,$priority,$slot);
 	}
 
 	/**
@@ -491,9 +492,10 @@ class Assets extends Prefab {
 	 * @param string $path
 	 * @param int $priority
 	 * @param string $group
+	 * @param null $slot
 	 */
-	public function addCss($path,$priority=5,$group='head') {
-		$this->add($path,'css',$group,$priority);
+	public function addCss($path,$priority=5,$group='head',$slot=null) {
+		$this->add($path,'css',$group,$priority,$slot);
 	}
 
 	/**
