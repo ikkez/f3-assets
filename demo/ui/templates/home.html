@@ -32,7 +32,13 @@
 
 		<p>This way, you can also add CSS/JS files to the <code>&lt;head&gt;</code> section for your template, <strong>from the inside of included sub-templates</strong>. See the
 			<a href="assets/widget">widget page</a> for a demo.</p>
-		<p>All assets that were added to template this way, are collected into groups for being displayed in your HTML document.
+
+		<p>You can also enable the <code>greedy</code> mode and let this plugin handle all of your existing tags, like:</p>
+
+		<pre class="language-markup"><code>&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;ui/css/font-awesome.css&quot; /&gt;
+&lt;script src=&quot;ui/js/main.js&quot;&gt;&lt;/script&gt;</code></pre>
+
+		<p>All assets that were added to template are collected into groups for being displayed in your HTML document.
 			These can then be combined to a single file and stripped of superfluous whitespaces and comments.
 		With additional attributes and configuration, you can control the load order and what to skip, minify or merge together.</p>
 
@@ -44,7 +50,7 @@
 
 		<ol>
 			<li>
-				<p>Just <a href="https://github.com/ikkez/f3-assets/archive/master.zip"><i class="fa fa-download"></i> download</a> the package, or require it with composer:<br/><code>composer require ikkez/f3-assets:dev-master</code>
+				<p>Just <a href="https://github.com/ikkez/f3-assets/archive/master.zip"><i class="fa fa-download"></i> download</a> the package and register it to <code>AUTOLOAD</code>, or require it with composer:<br/><code>composer require ikkez/f3-assets:dev-master</code>
 				</p>
 			</li>
 			<li>
@@ -52,8 +58,17 @@
 				</p>
 			</li>
 			<li>
-				<p>Add some <a href="assets/documentation#configuration">configuration</a>, make the public path writable and <a href="assets/documentation#adding-assets">bind your assets to the templates</a>.
-				</p>
+				<p>Add this sample configuration (or load the <a href="https://github.com/ikkez/f3-assets/blob/master/assets_config.ini" target="_blank">sample ini file</a>):</p>
+				<pre class="language-ini"><code>[ASSETS]
+auto_include = true
+greedy = true
+filter.js = minify,combine
+filter.css = minify,combine
+public_path = compressed/</code></pre>
+				<p>and have a look at the <a href="assets/documentation#configuration">configuration details</a>.</p>
+			</li>
+			<li>
+				<p>Make the <code>public_path</code> writable and clear the template files in your <code>tmp/</code> [<a href="https://fatfreeframework.com/quick-reference#TEMP" target="_blank">TEMP</a>] folder.</p>
 			</li>
 			<li>
 				<p>Done. Enjoy a cold beer and maybe <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=44UHPNUCVP7QG" target="_blank">donate</a> another one to me. Cheers.

@@ -11,9 +11,9 @@
 
 		<p>The interesting part happens in the <code>slider.html</code> file, where the assets were defined, that are needed for this frontend widget.</p>
 <pre class="language-markup"><code><ignore>
-&lt;F3:asset src=&quot;plugin/slick/slick.js&quot; /&gt;
-&lt;F3:asset src=&quot;plugin/slick/slick.css&quot; /&gt;
-&lt;F3:asset src=&quot;plugin/slick/slick-theme.css&quot; /&gt;
+&lt;F3:asset src=&quot;plugin/slick/slick.js&quot; slot=&quot;slick&quot;/&gt;
+&lt;F3:asset src=&quot;plugin/slick/slick.css&quot; slot=&quot;slick&quot; /&gt;
+&lt;F3:asset src=&quot;plugin/slick/slick-theme.css&quot; slot=&quot;slick&quot; /&gt;
 &lt;div class=&quot;slider&quot;&gt;
 	&lt;F3:repeat group=&quot;{{@slides}}&quot; value=&quot;{{@text}}&quot; counter=&quot;{{@i}}&quot;&gt;
 		&lt;div&gt;
@@ -27,11 +27,13 @@
 </ignore></code></pre>
 		<p>That way, the required JS and CSS files are only loaded on this page.
 			Even if you include that sub-template multiple times, the asset dependencies are only included once.</p>
-		<p>If you check the source of this page, you will also notice that these widget assets were not merged into the big global CSS or JS file, but only minified.</p>
+		<p>If you check the source of this page, you will also notice that these widget assets were not merged into the big global CSS or JS file, but handled separately.</p>
 <pre class="language-markup"><code><ignore>
-&lt;script src=&quot;ui-assets/compressed/t5zyg63u7ogk.min.js&quot;&gt;&lt;/script&gt;
-&lt;script src=&quot;ui-assets/compressed/slick.min.js&quot;&gt;&lt;/script&gt;</ignore></code></pre>
-		<p>This is due to my current configuration, where I've set to skip all files from merging within my <code>ui/plugin/</code> directory. It has the advantage that the big global combined file will not change from page to page, which could cause redundant loading of your assets content.</p>
+&lt;script src=&quot;ui-assets/compressed/23qgaq95tzy8w.js?1478472403&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;ui-assets/compressed/2zzcd4valpc08.js?1478472403&quot;&gt;&lt;/script&gt;</ignore></code></pre>
+		<p>This is possible when you add a custom combine <code>slot</code> attribute to the assets. All <em>internal</em> files within a slot are combined into one individual file.</p>
+		<p>It's also possible by adjusting the configuration. When you want to skip all files from merging within the <code>ui/plugin/</code> directory, you can set this to <code>ASSETS.combine.exclude</code>.</p>
+		<p>It has the advantage that the big global combined file will not change from page to page, which could cause redundant loading of your assets content.</p>
 	</div>
 	<div class="col-md-4">
 		<F3:set slides="{{ array('Great.','Awesome.','Yeees!') }}" />

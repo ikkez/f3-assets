@@ -44,6 +44,13 @@ ul.key-facts {
     padding-left: 20px;
 }
 
+.main ul li {
+	margin-bottom: 4px;
+}
+.main ul ul {
+	margin-bottom: 12px;
+}
+
 var.label {
     font-style: normal;
     font-weight: bold;

@@ -26,14 +26,14 @@
 <pre class="language-markup"><code><ignore>
 &lt;F3:asset src=&quot;{{ 'css/'.@theme }}&quot; /&gt;</ignore></code></pre>
 
-		<p>There is also the config option <code>ASSETS.greedy</code>. When you set this <var>TRUE</var>, this plugin begins to rewrite all your existing css and js includes (script, style and link tags), so you don't have to change that much in your existing templates (experimental though).</p>
+		<p>There is also the config option <code>ASSETS.greedy</code>. When you set this <var>TRUE</var>, this plugin begins to rewrite all your existing css and js includes (script, style and link tags), so you don't have to change that much in your existing templates.</p>
 
 		<p>You can also add files within your controller, see the <a href="{{ @BASE }}assets/documentation#add">add method</a>.</p>
 
 		<h2 id="adding-filters">Adding Filters</h2>
 
 		<p>A filter is used to process a whole asset collection of the <strong>same type</strong>. The plugin comes with two build-in filters: <code>combine</code> and <code>minify</code>. The combine filter will just merge every assets in one group into a single file, and the minify filter just minifies the given file and returns its new file path.</p>
-		<p>You can customize which filters should be used for each file types, with the configuration variables at <code>ASSETS.filter</code>:</p>
+		<p>You can customize which filters should be used for each file type with the configuration variables at <code>ASSETS.filter</code>:</p>
 
 <pre class="language-ini"><code>
 [ASSETS]
@@ -75,11 +75,18 @@ public_path = ui/compressed/
 ;# exclude certain files from being combined, regex i.e. &quot;.*(\/widgets\/).*&quot;
 combine.exclude = &quot;.*(\/plugin\/).*&quot;
 
-;# minify filter final public path, overwrites .public_path
+;# register custom slot position, unregistered starts at 50++, default are:
+;# 10:top 20:external 40:internal 60:excluded 80:inline
+;combine.slots.30 = custom
+
+;# minify filter final public path, overwrites ASSETS.public_path
 ;minify.public_path = ui-assets/compressed/
 
 ;# exclude files from minification, regex i.e. &quot;.*(.min.).*&quot;
 minify.exclude = &quot;.*(.min.).*&quot;
+
+;# when handle_inline is on, also minify inline elements [ experimental & slow ]
+;minify.inline = true
 
 ;# add the mtime to the final resource URI, to aid in asset caching
 ;# default: false
@@ -111,7 +118,21 @@ timestamps = true
 				<code>ASSETS.combine.exclude</code><br/>It's important to understand that it's maybe better for some files from included sub-templates not to be combined which the other global files. Therefore you can set a regex pattern here to skip those files.
 			</li>
 			<li>
+				<code>ASSETS.combine.slots</code><br/>Assets are automatically grouped into slots by default. Each slot is processed separately and could create a combined file from internal assets. If you want to set a different slot to assets, add the <code>slot="custom"</code> attribute to the tag.
+				<br>This array defines the default slots and their positions. You can pre-define custom slots here (otherwise they will start at <code>50</code>) and there are 5 internal slots that must be present, but can be rearranged:<br>
+				<ul>
+					<li>10 = <code>top</code></li>
+					<li>20 = <code>external</code></li>
+					<li>40 = <code>internal</code></li>
+					<li>60 = <code>excluded</code></li>
+					<li>80 = <code>inline</code></li>
+				</ul>
+			</li>
+			<li>
 				<code>ASSETS.minify.exclude</code><br/>Already minified files doesn't really need to be minified again. That would only cost performance and could lead to broken files. That's why we skip <code>.min.</code> files by default.
+			</li>
+			<li>
+				<code>ASSETS.minify.inline</code><br/>This will put all contents of your inline style & script contents into a minified file. This is experimental and probably slow - use with care.
 			</li>
 			<li>
 				<code>ASSETS.timestamps</code><br/>When you turn this on, all asset paths are appended with their modification time (like <var>j1einyb0jaul.min.css?1438682851</var>. This helps you to deliver the latest changes to your users and work around their browser cache. This is highly recommended.
@@ -137,7 +158,7 @@ timestamps = true
 		</p>
 
 		<h3 id="add">add <small>add an asset file</small></h3>
-		<pre class="language-php"><code>add( string $path, string $type [, string $group='head' [, int $priority=5 ]]);</code></pre>
+		<pre class="language-php"><code>add( string $path, string $type [, string $group='head' [, string $slot=null [, int $priority=5 ]]]);</code></pre>
 		<p>
 			This adds a file to a render group. The <code>$path</code> filepath should be relative to an existing path defined in your
 			<a class="label label-info" href="http://fatfreeframework.com/quick-reference#UI" target="_blank">UI</a> system variable <strong>OR</strong> can be an absolute external URI. If the internal file was not found, the <code>ASSETS.onFileNotFound</code> handler is called.
@@ -156,7 +177,7 @@ $assets-&gt;add('css/style.css','css','head');
 $assets-&gt;add('foo/bar/main.js','js','footer');</code></pre>
 
 		<h3 id="addJs">addJs <small>add a javascript asset</small></h3>
-		<pre class="language-php"><code>addJs( string $path [, int $priority=5 [, string $group='footer' ]]);</code></pre>
+		<pre class="language-php"><code>addJs( string $path [, int $priority=5 [, string $group='footer' [, string $slot=null ]]]);</code></pre>
 
 		<p>This method is a little shortcut to the <a href="{{ @BASE }}assets/documentation#add">add</a> method, including defaults for javascript files.</p>
 
@@ -165,7 +186,7 @@ $assets-&gt;addJs('vendor/bootstrap.min.js');
 $assets-&gt;addJs('http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js',8);</code></pre>
 
 <h3 id="addCss">addCss <small>add a stylesheet asset</small></h3>
-		<pre class="language-php"><code>addCss( string $path [, int $priority=5 [, string $group='head' ]]);</code></pre>
+		<pre class="language-php"><code>addCss( string $path [, int $priority=5 [, string $group='head' [, string $slot=null ]]]);</code></pre>
 
 		<p>This method is a little shortcut to the <a href="{{ @BASE }}assets/documentation#add">add</a> method, including defaults for stylesheet files.</p>
 
@@ -175,7 +196,7 @@ $assets-&gt;addCss('css/main.css',1);</code></pre>
 
 
 <h3 id="addInline">addInline <small>add inline asset</small></h3>
-		<pre class="language-php"><code>addInline( string $path, string $type [, string $group='head' ]);</code></pre>
+		<pre class="language-php"><code>addInline( string $path, string $type [, string $group='head' [, string $slot='inline' ]]);</code></pre>
 
 		<p>This method adds some inline stylesheet or javascript code to the page.</p>
 
@@ -211,6 +232,7 @@ $assets-&gt;addInline('alert(123);','js');</code></pre>
 		<pre class="language-php"><code>clear();</code></pre>
 
 		<p>If you want to remove all temporary files that were generated, just call this method to initiate regeneration of them.</p>
+		<p>It <em>returns</em> an integer with the number of deleted files.</p>
 
 		<h3 id="formatter">formatter <small>set custom type formatter</small></h3>
 		<pre class="language-php"><code>formatter( string $type, string|callback $func);</code></pre>

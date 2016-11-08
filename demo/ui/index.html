@@ -47,20 +47,20 @@
 		</div>
 	</nav>
 
-	<div class="container">
+	<div class="container main">
 
 		<F3:include if="{{ @page }}" href="{{ 'templates/'.@page.'.html' }}" />
 		<hr>
 
 		<footer>
 			<div class="stats pull-right">{{ 'Page rendered in {0} ms / Memory usage {1} Kibytes',round(1e3*(microtime(TRUE)-$TIME),2),round(memory_get_usage(TRUE)/1e3,1) | format }}</div>
-			<p><i class="fa fa-copyright"></i> 2015 - ikkez, <small class="stats">candy icon by Nherwin Ardoña from the Noun Project</small></p>
+			<p><i class="fa fa-copyright"></i> {{ date('Y') }} - ikkez, <small class="stats">candy icon by Nherwin Ardoña from the Noun Project</small></p>
 		</footer>
 	</div>
 <F3:asset src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js" priority="10" />
 <F3:asset src="js/vendor/bootstrap.min.js" priority="10" />
 <F3:asset src="js/vendor/prism.js" />
-<F3:asset src="js/main.js" />
+<script src="js/main.js"></script>
 
 </body>
 </html>
