@@ -422,28 +422,29 @@ class Assets extends Prefab {
 	public function fixRelativePaths($content,$path,$targetDir=null) {
 		// Rewrite relative URLs in CSS
 		$f3=$this->f3;
-		$base=$f3->get('BASE');
 		$method=$f3->get('ASSETS.fixRelativePaths');
 		if ($method!==FALSE) {
+			$webBase=$f3->get('BASE');
+			// fix base path (resolve symbolic links)
+			$basePath=realpath($f3->fixslashes($_SERVER['DOCUMENT_ROOT'].$webBase)).'/';
+			// parse content for URLs
 			$content=preg_replace_callback(
 				'/\b(?<=url)\((?:([\"\']?)(.+?)((\?.*?)?)\1)\)/s',
-				function($url) use ($path,$f3,$base,$targetDir,$method) {
+				function($url) use ($path,$f3,$webBase,$basePath,$targetDir,$method) {
 					// Ignore absolute URLs
 					if (preg_match('/https?:/',$url[2]) ||
 						!$rPath=realpath($path.$url[2]))
 						return $url[0];
 					if ($method=='relative') {
 						// relative from new public file path
-						$filePathFromBase=
-							str_replace($f3->fixslashes($_SERVER['DOCUMENT_ROOT']).$base.'/',
-								'',$f3->fixslashes($rPath));
+						$filePathFromBase=str_replace($basePath,'',$f3->fixslashes($rPath));
 						$rel=$this->relPath($targetDir,$filePathFromBase);
 						return '('.$url[1].$rel.(isset($url[4])?$url[4]:'').$url[1].')';
 					} elseif ($method=='absolute') {
 						// absolute to web root / base
 						return '('.$url[1].preg_replace(
-								'/'.preg_quote($f3->fixslashes($_SERVER['DOCUMENT_ROOT']).$base.'/','/').'(.+)/',
-								'\1',$base.'/'.$f3->fixslashes($rPath).(isset($url[4])?$url[4]:'')
+								'/'.preg_quote($basePath,'/').'(.+)/',
+								'\1',$webBase.'/'.$f3->fixslashes($rPath).(isset($url[4])?$url[4]:'')
 							).$url[1].')';
 					}
 					return $url[0];
