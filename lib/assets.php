@@ -7,10 +7,10 @@
  *	compliance with the license. Any of the license terms and conditions
  *	can be waived if you get permission from the copyright holder.
  *
- *	Copyright (c) 2016 ~ ikkez
+ *	Copyright (c) 2017 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 1.0.0
+ *	@version: 1.1.0-dev
  *	@date: 08.11.2016
  *	@since: 08.08.2014
  *
@@ -57,6 +57,7 @@ class Assets extends Prefab {
 				'exclude'=>'.*(.min.).*',
 				'inline'=>false,
 			),
+			'fixRelativePaths'=>'relative',
 			'handle_inline'=>false,
 			'timestamps'=>false,
 			'onFileNotFound'=>null,
@@ -304,7 +305,7 @@ class Assets extends Prefab {
 							$data = $this->f3->read($asset['path']);
 							if ($type=='css')
 								$data = $this->fixRelativePaths($data,
-									pathinfo($asset['path'],PATHINFO_DIRNAME).'/');
+									pathinfo($asset['path'],PATHINFO_DIRNAME).'/',$public_path);
 							$content[] = $data;
 						}
 						$this->f3->write($filepath,
@@ -371,7 +372,7 @@ class Assets extends Prefab {
 						$path_parts['dirname'].'/');
 					if ($type=='css')
 						$min = $this->fixRelativePaths($min,
-							$path_parts['dirname'].'/');
+							$path_parts['dirname'].'/',$public_path);
 					$this->f3->write($public_path.$filename,$min);
 				}
 				$asset['path'] = $public_path.$filename;
@@ -415,27 +416,66 @@ class Assets extends Prefab {
 	 * @author Bong Cosca, from F3 v2.0.13, http://bit.ly/1Mwl7nq
 	 * @param string $content
 	 * @param string $path
+	 * @param string $targetDir
 	 * @return string
 	 */
-	protected function fixRelativePaths($content,$path) {
+	public function fixRelativePaths($content,$path,$targetDir=null) {
 		// Rewrite relative URLs in CSS
 		$f3=$this->f3;
 		$base=$f3->get('BASE');
-		$out = preg_replace_callback(
-			'/\b(?<=url)\((?:([\"\']?)(.+?)((\?.*?)?)\1)\)/s',
-			function($url) use($path,$f3,$base) {
-				// Ignore absolute URLs
-				if (preg_match('/https?:/',$url[2]) ||
-					!$rPath=realpath($path.$url[2]))
+		$method=$f3->get('ASSETS.fixRelativePaths');
+		if ($method!==FALSE) {
+			$content=preg_replace_callback(
+				'/\b(?<=url)\((?:([\"\']?)(.+?)((\?.*?)?)\1)\)/s',
+				function($url) use ($path,$f3,$base,$targetDir,$method) {
+					// Ignore absolute URLs
+					if (preg_match('/https?:/',$url[2]) ||
+						!$rPath=realpath($path.$url[2]))
+						return $url[0];
+					if ($method=='relative') {
+						// relative from new public file path
+						$filePathFromBase=
+							str_replace($f3->fixslashes($_SERVER['DOCUMENT_ROOT']).$base.'/',
+								'',$f3->fixslashes($rPath));
+						$rel=$this->relPath($targetDir,$filePathFromBase);
+						return '('.$url[1].$rel.(isset($url[4])?$url[4]:'').$url[1].')';
+					} elseif ($method=='absolute') {
+						// absolute to web root / base
+						return '('.$url[1].preg_replace(
+								'/'.preg_quote($f3->fixslashes($_SERVER['DOCUMENT_ROOT']).$base.'/','/').'(.+)/',
+								'\1',$base.'/'.$f3->fixslashes($rPath).(isset($url[4])?$url[4]:'')
+							).$url[1].')';
+					}
 					return $url[0];
-				// absolute to web root / base
-				// TODO: maybe build full relative paths?
-				return '('.$url[1].preg_replace(
-					'/'.preg_quote($f3->fixslashes($_SERVER['DOCUMENT_ROOT']).$base.'/','/').'(.+)/',
-					'\1',$base.'/'.$f3->fixslashes($rPath).(isset($url[4])?$url[4]:'')
-				).$url[1].')';
-			},$content);
-		return $out;
+				},$content);
+		}
+		return $content;
+	}
+
+	/**
+	 * assemble relative path to go from A to B
+	 * @param $from
+	 * @param $to
+	 * @return string
+	 */
+	public function relPath($from,$to) {
+		$expFrom = explode('/',$from);
+		$expTo = explode('/',$to);
+		$max=max(count($expFrom),count($expTo));
+		$rel = [];
+		$base=TRUE;
+		for ($i=0;$i<$max;$i++) {
+			if ($base && isset($expTo[$i]) && isset($expFrom[$i])
+				&& $expTo[$i] === $expFrom[$i])
+				continue;
+			else
+				$base=FALSE;
+			if (!empty($expFrom[$i]))
+				array_unshift($rel,'..');
+			if (!empty($expTo[$i]))
+				array_push($rel,$expTo[$i]);
+		}
+		return implode('/',$rel);
 	}
 
 	/**
