@@ -92,6 +92,10 @@ minify.exclude = &quot;.*(.min.).*&quot;
 ;# default: false
 timestamps = true
 
+;# strategy how to rewrite relative url paths in CSS files,
+;# methods: [relative,absolute,FALSE], default: relative
+;fixRelativePaths = relative
+
 ;# if true, all inline &lt;style&gt; and &lt;script&gt; tags are collected too.
 ;# default: false
 ;handle_inline = true
@@ -112,7 +116,7 @@ timestamps = true
 				<code>ASSETS.filter</code><br/>You can define all filters for each file type in a sorted array. Each result of a filter is passed into the next filter.
 			</li>
 			<li>
-				<code>ASSETS.public_path</code><br/>We need that path to place newly created files here, which are public accessible. Relative paths in your CSS files are going to be rewritten to fit into that new path. Make sure this directory is writable.
+				<code>ASSETS.public_path</code><br/>We need that path to place newly created files here, which are public accessible. Relative paths in your CSS files are going to be rewritten to fit into that new path. <b>Make sure this directory is writable.</b>
 			</li>
 			<li>
 				<code>ASSETS.combine.exclude</code><br/>It's important to understand that it's maybe better for some files from included sub-templates not to be combined which the other global files. Therefore you can set a regex pattern here to skip those files.
@@ -136,6 +140,16 @@ timestamps = true
 			</li>
 			<li>
 				<code>ASSETS.timestamps</code><br/>When you turn this on, all asset paths are appended with their modification time (like <var>j1einyb0jaul.min.css?1438682851</var>. This helps you to deliver the latest changes to your users and work around their browser cache. This is highly recommended.
+			</li>
+			<li>
+				<code>ASSETS.fixRelativePaths</code><br/>When combined CSS files are created and moved into the <code>public_path</code>, the CSS url paths, that were used in those files, are going to be rewritten to match the new path.
+				<br>For instance your css file contains <code>background: url(../img/logo.jpg)</code> but the final stylesheet file went from <em>theme/css/main.css</em> to <em>tmp/compressed/main.min.css</em>, so these url paths needs to be updated.
+				This setting is used to select the new path strategy:<br>
+				<ul>
+					<li><code>relative</code> (default): will create relative paths like <code>../../theme/img/logo.jpg</code></li>
+					<li><code>absolute</code>: web root based absolute paths are create, i.e. <code>/myApp/theme/img/logo.jpg</code></li>
+					<li><code>FALSE</code>: disables this feature completely</li>
+				</ul>
 			</li>
 			<li>
 				<code>ASSETS.handle_inline</code><br/>If you have a to deal with lots of inline styles or scripts (I hope you do not), this option helps you to get them sorted.
