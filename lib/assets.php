@@ -10,8 +10,8 @@
  *	Copyright (c) 2017 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 1.1.0
- *	@date: 05.09.2017
+ *	@version: 1.1.1
+ *	@date: 16.09.2017
  *	@since: 08.08.2014
  *
  **/
@@ -426,7 +426,8 @@ class Assets extends Prefab {
 		if ($method!==FALSE) {
 			$webBase=$f3->get('BASE');
 			// fix base path (resolve symbolic links)
-			$basePath=realpath($f3->fixslashes($_SERVER['DOCUMENT_ROOT'].$webBase)).'/';
+			$basePath=$f3->fixslashes(realpath(
+				$f3->fixslashes($_SERVER['DOCUMENT_ROOT'].$webBase)).DIRECTORY_SEPARATOR);
 			// parse content for URLs
 			$content=preg_replace_callback(
 				'/\b(?<=url)\((?:([\"\']?)(.+?)((\?.*?)?)\1)\)/s',
