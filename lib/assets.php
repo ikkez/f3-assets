@@ -10,8 +10,8 @@
  *	Copyright (c) 2017 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 1.1.1
- *	@date: 16.09.2017
+ *	@version: 1.1.2
+ *	@date: 27.09.2017
  *	@since: 08.08.2014
  *
  **/
@@ -497,8 +497,7 @@ class Assets extends Prefab {
 		$asset = array(
 			'path'=>$path,
 			'type'=>$type,
-			'slot'=>$slot,
-			'origin'=>''
+			'slot'=>$slot
 		) + ($params?:array());
 		if (preg_match('/^(http(s)?:)?\/\/.*/i',$path)) {
 			$asset['origin'] = 'external';
@@ -515,6 +514,8 @@ class Assets extends Prefab {
 		// file not found
 		if ($handler=$this->f3->get('ASSETS.onFileNotFound'))
 			$this->f3->call($handler,array($path,$this));
+		// mark unknown file as external
+		$asset['origin'] = 'external';
 		$this->assets[$group][$type][$priority][]=$asset;
 	}
 
