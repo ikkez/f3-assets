@@ -102,7 +102,11 @@ timestamps = true
 
 ;# if true, all internal asset paths are prepended by the BASE path
 ;# default: false
-;prepend_base = true</code></pre>
+;prepend_base = true
+
+;# turn this when your application root path is not your public html / web root path
+;# default: false
+;trim_public_root = true</code></pre>
 
 		<h4>Details</h4>
 		<ul>
@@ -156,6 +160,9 @@ timestamps = true
 			</li>
 			<li>
 				<code>ASSETS.prepend_base</code><br/>Usually the final paths returned are only relative to your F3 directory. This is sufficient when your app lives on the web root or you use a &lt;base&gt;-Tag in your html markup. In case you need the full relative web root path added to the file paths, switch this setting to TRUE.
+			</li>
+			<li>
+				<code>ASSETS.trim_public_root</code><br/>When your application path (current working dir) is not the web root as well, you can turn this option on to trim the path offset to your <code>public_html</code> directory automatically.
 			</li>
 		</ul>
 
