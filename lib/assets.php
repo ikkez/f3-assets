@@ -58,6 +58,7 @@ class Assets extends Prefab {
 				'inline'=>false,
 			),
 			'fixRelativePaths'=>'relative',
+			'trim_public_root'=>false,
 			'handle_inline'=>false,
 			'timestamps'=>false,
 			'onFileNotFound'=>null,
@@ -206,6 +207,12 @@ class Assets extends Prefab {
 	 */
 	public function renderGroup($assets) {
 		$out = array();
+		if ($this->f3->get('ASSETS.trim_public_root')) {
+			$basePath=$this->f3->fixslashes(realpath($this->f3->fixslashes(
+				$_SERVER['DOCUMENT_ROOT'].$this->f3->get('BASE'))));
+			$cDir=getcwd();
+			$trimPublicDir=str_replace($cDir,'',$basePath);
+		}
 		foreach($assets as $asset_type=>$collection) {
 			if ($this->f3->exists('ASSETS.filter.'.$asset_type,$filters)) {
 				if (is_string($filters))
@@ -221,6 +228,8 @@ class Assets extends Prefab {
 						&& is_file($path)) ? '?'.filemtime($path) : '';
 					$base = ($this->f3->get('ASSETS.prepend_base') && $asset['origin']!='external'
 						&& is_file($path)) ? $this->f3->get('BASE').'/': '';
+					if (isset($trimPublicDir))
+						$path = substr($path,strlen($trimPublicDir));
 					$asset['path'] = $base.$path.$mtime;
 				}
 				$out[]=$this->f3->call($this->formatter[$asset_type],array($asset));
