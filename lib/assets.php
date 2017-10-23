@@ -279,17 +279,21 @@ class Assets extends Prefab {
 				$slots[$sn[$a_slot?:'internal']][] = $asset;
 			} else
 				// excluded internal
-				$slots[$sn[$a_slot?:'excluded']][] = $asset;
+				$slots[$sn['excluded']][] = $asset;
 		}
 		// proceed slots
 		ksort($slots);
 		$out = array();
-		foreach ($slots as $assets) {
+		foreach ($slots as $slotID => $assets) {
 			$internal=array();
 			$inline=array();
 			$hash_key=array();
 			// categorize per slot
 			foreach ($assets as $asset) {
+				if ($slotID == $sn['excluded']) {
+					$out[] = $asset;
+					continue;
+				}
 				if ($asset['origin']=='internal') {
 					$internal[$asset['type']][] = $asset;
 					// check if one of our combined files was changed (mtime)
