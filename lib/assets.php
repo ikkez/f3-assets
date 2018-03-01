@@ -228,7 +228,7 @@ class Assets extends Prefab {
 						&& is_file($path)) ? '?'.filemtime($path) : '';
 					$base = ($this->f3->get('ASSETS.prepend_base') && $asset['origin']!='external'
 						&& is_file($path)) ? $this->f3->get('BASE').'/': '';
-					if (isset($trimPublicDir))
+					if (isset($trimPublicDir) && $asset['origin']!='external')
 						$path = substr($path,strlen($trimPublicDir));
 					$asset['path'] = $base.$path.$mtime;
 				}
