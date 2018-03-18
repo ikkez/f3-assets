@@ -7,11 +7,11 @@
  *	compliance with the license. Any of the license terms and conditions
  *	can be waived if you get permission from the copyright holder.
  *
- *	Copyright (c) 2017 ~ ikkez
+ *	Copyright (c) 2018 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 1.1.2
- *	@date: 27.09.2017
+ *	@version: 1.1.4
+ *	@date: 18.03.2018
  *	@since: 08.08.2014
  *
  **/
@@ -651,7 +651,8 @@ class Assets extends Prefab {
 				$params['slot'] = 'inline';
 			if ($this->f3->get('ASSETS.handle_inline'))
 				return '<?php \Assets::instance()->addInline('.
-				'$this->resolve('.(var_export($node,true)).',get_defined_vars()),'.
+				'$this->resolve('.(var_export($node,true)).
+					',get_defined_vars(),0,false,false),'.
 				var_export($params['type'],true).','.
 				var_export($params['group'],true).','.
 				var_export($params['slot'],true).'); ?>';
