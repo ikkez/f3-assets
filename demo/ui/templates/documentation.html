@@ -79,6 +79,10 @@ combine.exclude = &quot;.*(\/plugin\/).*&quot;
 ;# 10:top 20:external 40:internal 60:excluded 80:inline
 ;combine.slots.30 = custom
 
+;# merge additional attributes into the bundled tag
+;# default: false
+;combine.merge_attributes = true
+
 ;# minify filter final public path, overwrites ASSETS.public_path
 ;minify.public_path = ui-assets/compressed/
 
@@ -123,7 +127,7 @@ timestamps = true
 				<code>ASSETS.public_path</code><br/>We need that path to place newly created files here, which are public accessible. Relative paths in your CSS files are going to be rewritten to fit into that new path. <b>Make sure this directory is writable.</b>
 			</li>
 			<li>
-				<code>ASSETS.combine.exclude</code><br/>It's important to understand that it's maybe better for some files from included sub-templates not to be combined which the other global files. Therefore you can set a regex pattern here to skip those files.
+				<code>ASSETS.combine.exclude</code><br/>It's important to understand that it's maybe better for some files from included sub-templates not to be combined with the other global files. Therefore you can set a regex pattern here to skip those files.
 			</li>
 			<li>
 				<code>ASSETS.combine.slots</code><br/>Assets are automatically grouped into slots by default. Each slot is processed separately and could create a combined file from internal assets. If you want to set a different slot to assets, add the <code>slot="custom"</code> attribute to the tag.
@@ -135,6 +139,9 @@ timestamps = true
 					<li>60 = <code>excluded</code></li>
 					<li>80 = <code>inline</code></li>
 				</ul>
+			</li>
+			<li>
+				<code>ASSETS.combine.merge_attributes</code><br/>In case you want to add some additional attributes to the final tag of the combined file, turn this setting on and it'll merge all present attributes into the final one.
 			</li>
 			<li>
 				<code>ASSETS.minify.exclude</code><br/>Already minified files doesn't really need to be minified again. That would only cost performance and could lead to broken files. That's why we skip <code>.min.</code> files by default.
@@ -151,8 +158,8 @@ timestamps = true
 				This setting is used to select the new path strategy:<br>
 				<ul>
 					<li><code>relative</code> (default): will create relative paths like <code>../../theme/img/logo.jpg</code></li>
-					<li><code>absolute</code>: web root based absolute paths are create, i.e. <code>/myApp/theme/img/logo.jpg</code></li>
-					<li><code>FALSE</code>: disables this feature completely</li>
+					<li><code>absolute</code>: web root based absolute paths are created, i.e. <code>/myApp/theme/img/logo.jpg</code></li>
+					<li><code>FALSE</code>: disable this feature completely</li>
 				</ul>
 			</li>
 			<li>
@@ -275,6 +282,13 @@ $assets-&gt;filter('cloud',function($collection){
 });</code></pre>
 
 
+		<hr>
+		<h2 id="events">Events</h2>
+
+		<h3 id="onFileNotFound">onFileNotFound <small>error handler</small></h3>
+		<pre class="language-php"><code>$f3->set('ASSETS.onFileNotFound', function($filePath) {
+	print_r('file not found: '.$filePath);
+});</code></pre>
 
 	</div>
 	<div class="col-md-4">
