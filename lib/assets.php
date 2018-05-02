@@ -385,7 +385,8 @@ class Assets extends Prefab {
 				(empty($exclude) || !preg_match('/'.$exclude.'/i',$path)))) {
 				// proceed
 				$path_parts = pathinfo($path);
-				$filename = $path_parts['filename'].'.min.'.$type;
+				$filename = $path_parts['filename'].'.'
+					.substr($this->f3->hash($path),0,5).'.min.'.$type;
 				if (!is_file($public_path.$filename) ||
 					(filemtime($path)>filemtime($public_path.$filename))) {
 					$min = $web->minify($path_parts['basename'],null,false,
