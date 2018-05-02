@@ -10,7 +10,7 @@
  *	Copyright (c) 2018 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 1.1.4
+ *	@version: 1.1.5-dev
  *	@date: 18.03.2018
  *	@since: 08.08.2014
  *
@@ -44,6 +44,7 @@ class Assets extends Prefab {
 			'combine'=>array(
 				'public_path'=>'',
 				'exclude'=>'',
+				'merge_attributes'=>false,
 				'slots'=>array(
 					10=>'top',
 					20=>'external',
@@ -324,11 +325,17 @@ class Assets extends Prefab {
 						$this->f3->write($filepath,
 							implode(($type=='js'?';':'')."\n",$content));
 					}
+					$extra_attr=[];
+					if ($this->f3->get('ASSETS.combine.merge_attributes'))
+						foreach($int_a as $asset)
+							$extra_attr+=array_diff_key($asset, array_flip([
+								'path','origin','type','exclude'
+							]));
 					$out[] = array(
 						'path'=>$filepath,
 						'type'=>$type,
 						'origin'=>'internal'
-					);
+					)+$extra_attr;
 				}
 			}
 			// combine inline
