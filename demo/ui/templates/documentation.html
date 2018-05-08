@@ -92,6 +92,10 @@ minify.exclude = &quot;.*(.min.).*&quot;
 ;# when handle_inline is on, also minify inline elements [ experimental & slow ]
 ;minify.inline = true
 
+;# overwrite default minify compiler, callable/string
+;minify.compiler.js =
+;minify.compiler.css =
+
 ;# add the mtime to the final resource URI, to aid in asset caching
 ;# default: false
 timestamps = true
@@ -100,7 +104,7 @@ timestamps = true
 ;# methods: [relative,absolute,FALSE], default: relative
 ;fixRelativePaths = relative
 
-;# if true, all inline &lt;style&gt; and &lt;script&gt; tags are collected too.
+;# if true, all &lt;style&gt; and &lt;script&gt; tags that contains inline data are collected too.
 ;# default: false
 ;handle_inline = true
 
@@ -112,80 +116,130 @@ timestamps = true
 ;# default: false
 ;trim_public_root = true</code></pre>
 
-		<h4>Details</h4>
+		<h3>Details</h3>
+		<a class="h4" href="{{ @REALM }}#ASSETS.auto_include" id="ASSETS.auto_include">ASSETS.auto_include</a>
+		<p>
+			This is true by default and adds <var>body</var> and <var>head</var> tag renderer to place the asset groups at the appropriate locations. That doesn't hurt much, but maybe leads to weird things when rendering two different templates at once, i.e. one html-email and one html-frontend for the client. Toggle this off if you're unsure and call the <a href="{{ @BASE }}assets/documentation#render">render</a> method at the locations of your choice.
+		</p>
+
+		<a class="h4" href="{{ @REALM }}#ASSETS.greedy" id="ASSETS.greedy">ASSETS.greedy</a>
+		<p>
+			This option can be seen as a drop-in trigger for existing projects. You don't have to change the way how to add assets, and you don't need to rewrite a thing when you decide to no longer use this plugin. It just tries to fetch everything relevant, but could also lead to some false positives or inefficient compiling.
+		</p>
+
+		<a class="h4" href="{{ @REALM }}#ASSETS.filter" id="ASSETS.filter">ASSETS.filter</a>
+		<p>
+			You can define all filters for each file type in a sorted array. Each result of a filter is passed into the next filter.
+		</p>
+
+		<a class="h4" href="{{ @REALM }}#ASSETS.public_path" id="ASSETS.public_path">ASSETS.public_path</a>
+		<p>
+			We need that path to place newly created files here, which are public accessible. Relative paths in your CSS files are going to be rewritten to fit into that new path. <b>Make sure this directory is writable.</b>
+		</p>
+
+		<a class="h4" href="{{ @REALM }}#ASSETS.combine.exclude" id="ASSETS.combine.exclude">ASSETS.combine.exclude</a>
+		<p>If you have a certain amount of files you want to exclude from being combined in general, you can set a regex pattern here to skip those files.</p>
+
+		<a class="h4" href="{{ @REALM }}#ASSETS.combine.slots" id="ASSETS.combine.slots">ASSETS.combine.slots</a>
+		<p>Assets are automatically grouped into slots by default. Each slot is processed separately and could create a combined file from internal assets. If you want to set a different slot to assets, add the <code>slot="custom"</code> attribute to the tag.</p>
+		<p>This array defines the default slots and their positions. You can pre-define custom slots here (otherwise they will start at <code>50</code>) and there are 5 internal slots that must be present, but can be rearranged:<br></p>
 		<ul>
-			<li>
-				<code>ASSETS.auto_include</code><br/>This is true by default and adds <var>body</var> and <var>head</var> tag renderer to place the asset groups at the appropriate locations. That doesn't hurt much, but maybe leads to weird things when rendering two different templates at once, i.e. one html-email and one html-frontend for the client. Toggle this off if you're unsure and call the <a href="{{ @BASE }}assets/documentation#render">render</a> method at the locations of your choice.
+			<li>10 = <code>top</code></li>
+			<li>20 = <code>external</code></li>
+			<li>40 = <code>internal</code></li>
+			<li>60 = <code>excluded</code></li>
+			<li>80 = <code>inline</code></li>
+		</ul>
+
+		<a class="h4" href="{{ @REALM }}#ASSETS.combine.merge_attributes" id="ASSETS.combine.merge_attributes">ASSETS.combine.merge_attributes</a>
+		<p>
+			In case you want to add some additional attributes to the final tag of the combined file, turn this setting on and it'll merge all present attributes into the final one.
+		</p>
+
+		<a class="h4" href="{{ @REALM }}#ASSETS.minify.exclude" id="ASSETS.minify.exclude">ASSETS.minify.exclude</a>
+		<p>
+			Already minified files doesn't really need to be minified again. That would only cost performance and could lead to broken files. That's why we skip <code>.min.</code> files by default.
+		</p>
+
+		<a class="h4" href="{{ @REALM }}#ASSETS.minify.inline" id="ASSETS.minify.inline">ASSETS.minify.inline</a>
+		<p>
+			This will put all contents of your inline style & script contents into a minified file. This is experimental and probably slow - use with care.
+		</p>
+
+		<a class="h4" href="{{ @REALM }}#ASSETS.minify.compiler" id="ASSETS.minify.compiler">ASSETS.minify.compiler.js
+			<br>ASSETS.minify.compiler.css</a>
+		<p>
+			With these options, you can setup a <b>different</b> css/js compiler alternative to the default, which uses F3's
+			<a href="https://fatfreeframework.com/3.6/web#minify" target="_blank">Web->minify</a>.<br>
+			You can set an anonymous function to this option, or a callable string. The callback receives 2 parameters, 1st the <code>$fileName</code> and 2nd the <code>$path</code> and should return the final minified code.
+		</p>
+		<p><b>Some examples:</b></p>
+		<ul>
+			<li>Using: <code>composer require tedivm/jshrink</code>:<br>
+				<pre class="language-php"><code>$f3->set('ASSETS.minify.compiler.js', function($fileName,$path){
+	return \JShrink\Minifier::minify(\Base::instance()->read($path.$fileName));
+});</code></pre>
 			</li>
-			<li>
-				<code>ASSETS.greedy</code><br/>This option can be seen as a drop-in trigger for existing projects. You don't have to change the way how to add assets, and you don't need to rewrite a thing when you decide to no longer use this plugin. It just tries to fetch everything relevant, but could also lead to some false positives or inefficient compiling.
-			</li>
-			<li>
-				<code>ASSETS.filter</code><br/>You can define all filters for each file type in a sorted array. Each result of a filter is passed into the next filter.
-			</li>
-			<li>
-				<code>ASSETS.public_path</code><br/>We need that path to place newly created files here, which are public accessible. Relative paths in your CSS files are going to be rewritten to fit into that new path. <b>Make sure this directory is writable.</b>
-			</li>
-			<li>
-				<code>ASSETS.combine.exclude</code><br/>It's important to understand that it's maybe better for some files from included sub-templates not to be combined with the other global files. Therefore you can set a regex pattern here to skip those files.
-			</li>
-			<li>
-				<code>ASSETS.combine.slots</code><br/>Assets are automatically grouped into slots by default. Each slot is processed separately and could create a combined file from internal assets. If you want to set a different slot to assets, add the <code>slot="custom"</code> attribute to the tag.
-				<br>This array defines the default slots and their positions. You can pre-define custom slots here (otherwise they will start at <code>50</code>) and there are 5 internal slots that must be present, but can be rearranged:<br>
-				<ul>
-					<li>10 = <code>top</code></li>
-					<li>20 = <code>external</code></li>
-					<li>40 = <code>internal</code></li>
-					<li>60 = <code>excluded</code></li>
-					<li>80 = <code>inline</code></li>
-				</ul>
-			</li>
-			<li>
-				<code>ASSETS.combine.merge_attributes</code><br/>In case you want to add some additional attributes to the final tag of the combined file, turn this setting on and it'll merge all present attributes into the final one.
-			</li>
-			<li>
-				<code>ASSETS.minify.exclude</code><br/>Already minified files doesn't really need to be minified again. That would only cost performance and could lead to broken files. That's why we skip <code>.min.</code> files by default.
-			</li>
-			<li>
-				<code>ASSETS.minify.inline</code><br/>This will put all contents of your inline style & script contents into a minified file. This is experimental and probably slow - use with care.
-			</li>
-			<li>
-				<code>ASSETS.timestamps</code><br/>When you turn this on, all asset paths are appended with their modification time (like <var>j1einyb0jaul.min.css?1438682851</var>. This helps you to deliver the latest changes to your users and work around their browser cache. This is highly recommended.
-			</li>
-			<li>
-				<code>ASSETS.fixRelativePaths</code><br/>When combined CSS files are created and moved into the <code>public_path</code>, the CSS url paths, that were used in those files, are going to be rewritten to match the new path.
-				<br>For instance your css file contains <code>background: url(../img/logo.jpg)</code> but the final stylesheet file went from <em>theme/css/main.css</em> to <em>tmp/compressed/main.min.css</em>, so these url paths needs to be updated.
-				This setting is used to select the new path strategy:<br>
-				<ul>
-					<li><code>relative</code> (default): will create relative paths like <code>../../theme/img/logo.jpg</code></li>
-					<li><code>absolute</code>: web root based absolute paths are created, i.e. <code>/myApp/theme/img/logo.jpg</code></li>
-					<li><code>FALSE</code>: disable this feature completely</li>
-				</ul>
-			</li>
-			<li>
-				<code>ASSETS.handle_inline</code><br/>If you have a to deal with lots of inline styles or scripts (I hope you do not), this option helps you to get them sorted.
-			</li>
-			<li>
-				<code>ASSETS.prepend_base</code><br/>Usually the final paths returned are only relative to your F3 directory. This is sufficient when your app lives on the web root or you use a &lt;base&gt;-Tag in your html markup. In case you need the full relative web root path added to the file paths, switch this setting to TRUE.
-			</li>
-			<li>
-				<code>ASSETS.trim_public_root</code><br/>When your application path (current working dir) is not the web root as well, you can turn this option on to trim the path offset to your <code>public_html</code> directory automatically.
+			<li>Using: <code>composer require matthiasmullie/minify</code>:<br>
+				<pre class="language-php"><code>$f3->set('ASSETS.minify.compiler.js', function($fileName,$path){
+	$minifier = new \MatthiasMullie\Minify\JS($path.$fileName);
+	return $minifier->minify();
+});</code></pre>
+				<span>or as callable string:</span>
+				<pre class="language-php"><code>$f3->set('ASSETS.minify.compiler.css', 'MyUtilityClass::minifyCSSAlternative');
+
+// within class MyUtilityClass
+static function minifyCSSAlternative($fileName,$path) {
+	$minifier = new \MatthiasMullie\Minify\CSS($path.$fileName);
+	return $minifier->minify();
+}</code></pre>
 			</li>
 		</ul>
 
+		<a class="h4" href="{{ @REALM }}#ASSETS.timestamps" id="ASSETS.timestamps">ASSETS.timestamps</a>
+		<p>
+			When you turn this on, all asset paths are appended with their modification time (like <var>j1einyb0jaul.min.css?1438682851</var>. This helps you to deliver the latest changes to your users and work around their browser cache. This is highly recommended.
+		</p>
+
+		<a class="h4" href="{{ @REALM }}#ASSETS.fixRelativePaths" id="ASSETS.fixRelativePaths">ASSETS.fixRelativePaths</a>
+		<p>
+			When combined CSS files are created and moved into the <code>public_path</code>, the CSS url paths, that were used in those files, are going to be rewritten to match the new path.
+		</p>
+		<p>For instance your css file contains <code>background: url(../img/logo.jpg)</code> but the final stylesheet file went from <em>theme/css/main.css</em> to <em>tmp/compressed/main.min.css</em>, so these url paths needs to be updated.
+			This setting is used to select the new path strategy:<br></p>
+		<ul>
+			<li><code>relative</code> (default): will create relative paths like <code>../../theme/img/logo.jpg</code></li>
+			<li><code>absolute</code>: web root based absolute paths are created, i.e. <code>/myApp/theme/img/logo.jpg</code></li>
+			<li><code>FALSE</code>: disable this feature completely</li>
+		</ul>
+
+		<a class="h4" href="{{ @REALM }}#ASSETS.handle_inline" id="ASSETS.handle_inline">ASSETS.handle_inline</a>
+		<p>
+			If you have a to deal with lots of inline styles or scripts (I hope you do not), this option helps you to get them sorted. This option is a bit costly, as inline scripts cannot be cached the usual way.
+		</p>
+
+		<a class="h4" href="{{ @REALM }}#ASSETS.prepend_base" id="ASSETS.prepend_base">ASSETS.prepend_base</a>
+		<p>
+			Usually the final paths returned are only relative to your F3 directory. This is sufficient when your app lives on the web root or you use a &lt;base&gt;-Tag in your html markup. In case you need the full relative web root path added to the file paths, switch this setting to TRUE.
+		</p>
+
+		<a class="h4" href="{{ @REALM }}#ASSETS.trim_public_root" id="ASSETS.trim_public_root">ASSETS.trim_public_root</a>
+		<p>
+			When your application path (current working dir) is not the web root as well, you can turn this option on to trim the path offset to your <code>public_html</code> directory automatically.
+		</p>
 
 
 		<hr>
-		<h2 id="api">API</h2>
+		<a class="h2" id="api" href="{{ @REALM }}#api">API</a>
 
-		<h3 id="instantiate">Instantiate</h3>
+		<a class="h3" id="instantiate" href="{{ @REALM }}#instantiate">Instantiate</a>
 		<pre class="language-php"><code>$assets = \Assets::instance();</code></pre>
 		<p>
 			When creating the first Asset instance, the plugin will register an <a href="http://fatfreeframework.com/view#afterrender" target="_blank">afterrender</a> callback, that is triggered after template compilation and looks for any placeholders with a syntax like <code>&lt;!-- assets-head --&gt;</code>. Those placeholders will be replaced with the result of collecting and processing the asset files that were registered in the currently used template files or your controller. The Assets plugin uses the <code>ASSETS</code> hive var for its configuration. It's best to load a
 			<a href="http://fatfreeframework.com/framework-variables#ConfigurationFiles" target="_blank">configuration file</a> before initializing this plugin, but you can also change those config options on the fly in your controller or elsewhere.
 		</p>
 
-		<h3 id="add">add <small>add an asset file</small></h3>
+		<a class="h3" id="add" href="{{ @REALM }}#add">add <small>add an asset file</small></a>
 		<pre class="language-php"><code>add( string $path, string $type [, string $group='head' [, string $slot=null [, int $priority=5 ]]]);</code></pre>
 		<p>
 			This adds a file to a render group. The <code>$path</code> filepath should be relative to an existing path defined in your
@@ -204,7 +258,7 @@ timestamps = true
 $assets-&gt;add('css/style.css','css','head');
 $assets-&gt;add('foo/bar/main.js','js','footer');</code></pre>
 
-		<h3 id="addJs">addJs <small>add a javascript asset</small></h3>
+		<a class="h3" href="{{ @REALM }}#addJs" id="addJs">addJs <small>add a javascript asset</small></a>
 		<pre class="language-php"><code>addJs( string $path [, int $priority=5 [, string $group='footer' [, string $slot=null ]]]);</code></pre>
 
 		<p>This method is a little shortcut to the <a href="{{ @BASE }}assets/documentation#add">add</a> method, including defaults for javascript files.</p>
@@ -213,7 +267,7 @@ $assets-&gt;add('foo/bar/main.js','js','footer');</code></pre>
 $assets-&gt;addJs('vendor/bootstrap.min.js');
 $assets-&gt;addJs('http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js',8);</code></pre>
 
-<h3 id="addCss">addCss <small>add a stylesheet asset</small></h3>
+<a class="h3" href="{{ @REALM }}#addCss" id="addCss">addCss <small>add a stylesheet asset</small></a>
 		<pre class="language-php"><code>addCss( string $path [, int $priority=5 [, string $group='head' [, string $slot=null ]]]);</code></pre>
 
 		<p>This method is a little shortcut to the <a href="{{ @BASE }}assets/documentation#add">add</a> method, including defaults for stylesheet files.</p>
@@ -223,7 +277,7 @@ $assets-&gt;addCss('//fonts.googleapis.com/css?family=Roboto:400,500');
 $assets-&gt;addCss('css/main.css',1);</code></pre>
 
 
-<h3 id="addInline">addInline <small>add inline asset</small></h3>
+<a class="h3" href="{{ @REALM }}#addInline" id="addInline">addInline <small>add inline asset</small></a>
 		<pre class="language-php"><code>addInline( string $path, string $type [, string $group='head' [, string $slot='inline' ]]);</code></pre>
 
 		<p>This method adds some inline stylesheet or javascript code to the page.</p>
@@ -233,17 +287,17 @@ $assets-&gt;addInline('body { background: #f00 !important; }','css');
 $assets-&gt;addInline('alert(123);','js');</code></pre>
 
 
-		<h3 id="getAssets">getAssets <small>get sorted, unique assets from group</small></h3>
+		<a class="h3" href="{{ @REALM }}#getAssets" id="getAssets">getAssets <small>get sorted, unique assets from group</small></a>
 		<pre class="language-php"><code>getAssets([ string $group="head" [, $type=NULL ]]);</code></pre>
 
 		<p>This returns an assoc array, keyed by file type, each including an array of sorted assets that belong to this group.</p>
 
-		<h3 id="getGroups">getGroups <small>get all defined groups</small></h3>
+		<a class="h3" href="{{ @REALM }}#getGroups" id="getGroups">getGroups <small>get all defined groups</small></a>
 		<pre class="language-php"><code>getGroups();</code></pre>
 
 		<p>Simply returns an array of all used groups.</p>
 
-		<h3 id="render">render <small>return placeholder for pending afterrender event</small></h3>
+		<a class="h3" href="{{ @REALM }}#render" id="render">render <small>return placeholder for pending afterrender event</small></a>
 		<pre class="language-php"><code>render([ string $group='head' ]);</code></pre>
 
 		<p>When you are using the View or Preview template engines, you might find it more useful to put php code into your templates, or when you have the <code>ASSETS.auto_include</code> option disabled. To add the assets group manually to your templates, you can use this:</p>
@@ -251,23 +305,23 @@ $assets-&gt;addInline('alert(123);','js');</code></pre>
 <pre class="language-php"><code><ignore>{{ \Assets::instance()-&gt;render('footer'); }}</ignore></code></pre>
 
 
-		<h3 id="reset">reset <small>reset file groups</small></h3>
+		<a class="h3" href="{{ @REALM }}#reset" id="reset">reset <small>reset file groups</small></a>
 		<pre class="language-php"><code>reset();</code></pre>
 
 		<p>In case you render multiple different templates, you can call this reset function to clear the assets collector once before rendering the next template.</p>
 
-		<h3 id="clear">clear <small>delete all css and js files in temp dir</small></h3>
+		<a class="h3" href="{{ @REALM }}#clear" id="clear">clear <small>delete all css and js files in temp dir</small></a>
 		<pre class="language-php"><code>clear();</code></pre>
 
 		<p>If you want to remove all temporary files that were generated, just call this method to initiate regeneration of them.</p>
 		<p>It <em>returns</em> an integer with the number of deleted files.</p>
 
-		<h3 id="formatter">formatter <small>set custom type formatter</small></h3>
+		<a class="h3" href="{{ @REALM }}#formatter" id="formatter">formatter <small>set custom type formatter</small></a>
 		<pre class="language-php"><code>formatter( string $type, string|callback $func);</code></pre>
 
 		<p>A formatter is used to render one single asset of the given <code>$type</code>. You can use this method to extend the renderer for processing file types different from the defaults (js/css). The callback method receives one parameter <code>$asset</code>, being an array with <var>path</var>, <var>type</var>, <var>origin</var> and <var>data</var> keys, and should return a string.</p>
 
-		<h3 id="filter">filter <small>set custom group filter</small></h3>
+		<a class="h3" href="{{ @REALM }}#filter" id="filter">filter <small>set custom group filter</small></a>
 		<pre class="language-php"><code>filter( string $name, string|callback $func);</code></pre>
 
 		<p>Custom filters are great to extend this plugins capabilities. In example, you could prepend a LESS or SASS filter, or append a filter that uploads your assets to a CDN and replaces the needed file paths on the fly.</p>
@@ -283,9 +337,9 @@ $assets-&gt;filter('cloud',function($collection){
 
 
 		<hr>
-		<h2 id="events">Events</h2>
+		<a class="h2" href="{{ @REALM }}#events" id="events">Events</a>
 
-		<h3 id="onFileNotFound">onFileNotFound <small>error handler</small></h3>
+		<a class="h3" href="{{ @REALM }}#addInline" id="onFileNotFound">onFileNotFound <small>error handler</small></a>
 		<pre class="language-php"><code>$f3->set('ASSETS.onFileNotFound', function($filePath) {
 	print_r('file not found: '.$filePath);
 });</code></pre>
