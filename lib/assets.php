@@ -218,7 +218,7 @@ class Assets extends Prefab {
 		if ($this->f3->get('ASSETS.trim_public_root')) {
 			$basePath=$this->f3->fixslashes(realpath($this->f3->fixslashes(
 				$_SERVER['DOCUMENT_ROOT'].$this->f3->get('BASE'))));
-			$cDir=getcwd();
+			$cDir=$this->f3->fixslashes(getcwd());
 			$trimPublicDir=str_replace($cDir,'',$basePath);
 		}
 		foreach($assets as $asset_type=>$collection) {
