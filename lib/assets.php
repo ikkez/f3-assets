@@ -7,11 +7,11 @@
  *	compliance with the license. Any of the license terms and conditions
  *	can be waived if you get permission from the copyright holder.
  *
- *	Copyright (c) 2018 ~ ikkez
+ *	Copyright (c) 2019 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 1.1.6
- *	@date: 21.08.2018
+ *	@version: 1.1.7
+ *	@date: 18.02.2019
  *	@since: 08.08.2014
  *
  **/
