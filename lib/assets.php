@@ -415,7 +415,7 @@ class Assets extends Prefab {
 					$filename = $hash.'.min.'.$type;
 					if (!is_file($public_path.$filename)) {
 						$this->f3->write($public_path.$filename,$data);
-						$min = $web->minify($filename,null,false,
+						$min = \Web::instance()->minify($filename,null,false,
 							$public_path);
 						$this->f3->write($public_path.$filename,$min);
 					}
