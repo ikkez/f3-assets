@@ -36,7 +36,7 @@ class Assets extends Prefab {
 	public function __construct(\Template $template=NULL) {
 		$this->template = $template ?: \Template::instance();
 		$f3 = $this->f3 = \Base::instance();
-		$minifyComplier = function($fileName,$path) {
+		$minifyCompiler = function($fileName,$path) {
 			return \Web::instance()->minify($fileName,null,false,$path);
 		};
 		$opt_defaults = array(
@@ -61,8 +61,8 @@ class Assets extends Prefab {
 				'exclude'=>'.*(.min.).*',
 				'inline'=>false,
 				'compiler'=>[
-					'js'=>$minifyComplier,
-					'css'=>$minifyComplier,
+					'js'=>$minifyCompiler,
+					'css'=>$minifyCompiler,
 				]
 			),
 			'fixRelativePaths'=>'relative',
