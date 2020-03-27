@@ -215,8 +215,9 @@ static function minifyCSSAlternative($fileName,$path) {
 
 		<a class="h4" href="{{ @REALM }}#ASSETS.handle_inline" id="ASSETS.handle_inline">ASSETS.handle_inline</a>
 		<p>
-			If you have a to deal with lots of inline styles or scripts (I hope you do not), this option helps you to get them sorted. This option is a bit costly, as inline scripts cannot be cached the usual way.
+			If you have a to deal with lots of inline styles or scripts, this option helps you to get them sorted. This option is a bit costly, as inline scripts cannot be cached the usual way.
 		</p>
+		<p>In case you only have a single script than you don't want to be processed, you can set an attribute like <code>handle="false"</code> to bypass any processing.</p>
 
 		<a class="h4" href="{{ @REALM }}#ASSETS.prepend_base" id="ASSETS.prepend_base">ASSETS.prepend_base</a>
 		<p>
