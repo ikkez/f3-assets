@@ -732,9 +732,27 @@ class Assets extends Prefab {
 	 */
 	static public function renderScriptTag(array $node) {
 		if (!isset($node['@attrib']))
-			$node['@attrib'] = array();
-		$node['@attrib']['type']='js';
-		return static::renderAssetTag($node);
+			$node['@attrib'] = [];
+		if (!isset($node['@attrib']['type']) || $node['@attrib']['type'] == 'text/javascript') {
+			$node['@attrib']['type']='js';
+			return static::renderAssetTag($node);
+		} else {
+			// skip and render them directly
+			$as=\Assets::instance();
+			$params = '';
+			if (isset($node['@attrib'])) {
+				$params = $as->resolveAttr($node['@attrib']);
+				unset($node['@attrib']);
+			}
+			$content = [];
+			// bypass inner content nodes
+			foreach ($node as $el)
+				$content[] = $as->template->build($el);
+			if ($content)
+				return "\t".'<script'.$params.'>'.implode("\n", $content)."\n".'</script>';
+			else
+				return "\t".'<script'.$params.' />';
+		}
 	}
 
 	/**
@@ -745,7 +763,8 @@ class Assets extends Prefab {
 	static public function renderStyleTag(array $node) {
 		if (!isset($node['@attrib']))
 			$node['@attrib'] = array();
-		$node['@attrib']['type']='css';
+		if (!isset($node['@attrib']['type']) || $node['@attrib']['type'] == 'text/css')
+			$node['@attrib']['type']='css';
 		return static::renderAssetTag($node);
 	}
 
