@@ -10,7 +10,7 @@
  *	Copyright (c) 2020 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 1.2.0
+ *	@version: 1.2.1
  *	@date: 27.03.2020
  *	@since: 08.08.2014
  *
@@ -209,6 +209,16 @@ class Assets extends Prefab {
 		return $assets;
 	}
 
+	protected function getPublicPath() {
+		if ($this->f3->get('ASSETS.trim_public_root')) {
+			$basePath=$this->f3->fixslashes(realpath($this->f3->fixslashes(
+				$_SERVER['DOCUMENT_ROOT'].$this->f3->get('BASE'))));
+			$cDir=$this->f3->fixslashes(getcwd());
+			return str_replace($cDir,'',$basePath);
+		}
+		return FALSE;
+	}
+
 	/**
 	 * render asset group
 	 * @param array $assets
@@ -216,12 +226,7 @@ class Assets extends Prefab {
 	 */
 	public function renderGroup($assets) {
 		$out = array();
-		if ($this->f3->get('ASSETS.trim_public_root')) {
-			$basePath=$this->f3->fixslashes(realpath($this->f3->fixslashes(
-				$_SERVER['DOCUMENT_ROOT'].$this->f3->get('BASE'))));
-			$cDir=$this->f3->fixslashes(getcwd());
-			$trimPublicDir=str_replace($cDir,'',$basePath);
-		}
+		$trimPublicDir=$this->getPublicPath();
 		foreach($assets as $asset_type=>$collection) {
 			if ($this->f3->exists('ASSETS.filter.'.$asset_type,$filters)) {
 				if (is_string($filters))
@@ -237,7 +242,7 @@ class Assets extends Prefab {
 						&& is_file($path)) ? '?'.filemtime($path) : '';
 					$base = ($this->f3->get('ASSETS.prepend_base') && $asset['origin']!='external'
 						&& is_file($path)) ? $this->f3->get('BASE').'/': '';
-					if (isset($trimPublicDir) && $asset['origin']!='external')
+					if ($trimPublicDir && $asset['origin']!='external')
 						$path = substr($path,strlen($trimPublicDir));
 					$asset['path'] = $base.$path.$mtime;
 				}
@@ -456,6 +461,9 @@ class Assets extends Prefab {
 			// fix base path (resolve symbolic links)
 			$basePath=$f3->fixslashes(realpath(
 				$f3->fixslashes($_SERVER['DOCUMENT_ROOT'].$webBase)).DIRECTORY_SEPARATOR);
+			if ($this->f3->get('ASSETS.trim_public_root')) {
+				$basePath=getcwd();
+			}
 			// parse content for URLs
 			$content=preg_replace_callback(
 				'/\b(?<=url)\((?:([\"\']?)(.+?)((\?.*?)?)\1)\)/s',
@@ -468,6 +476,7 @@ class Assets extends Prefab {
 						// relative from new public file path
 						$filePathFromBase=str_replace($basePath,'',$f3->fixslashes($rPath));
 						$rel=$this->relPath($targetDir,$filePathFromBase);
+						$rel=$this->trimPublicPath($rel);
 						return '('.$url[1].$rel.(isset($url[4])?$url[4]:'').$url[1].')';
 					} elseif ($method=='absolute') {
 						// absolute to web root / base
@@ -480,6 +489,18 @@ class Assets extends Prefab {
 				},$content);
 		}
 		return $content;
+	}
+
+	protected function trimPublicPath($path) {
+		$trimPath=$this->f3->get('ASSETS.trim_public_root');
+		if ($trimPath===true) {
+			$cDir=$this->f3->fixslashes(getcwd());
+			$public_path=str_replace($cDir,'',$this->f3->ROOT);
+			$path=str_replace($public_path,'',$path);
+		} elseif (!empty($trimPath)) {
+			$path=str_replace($trimPath,'',$path);
+		}
+		return $path;
 	}
 
 	/**
