@@ -10,8 +10,8 @@
  *	Copyright (c) 2020 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 1.2.1
- *	@date: 27.03.2020
+ *	@version: 1.2.2
+ *	@date: 28.02.2021
  *	@since: 08.08.2014
  *
  **/
@@ -239,11 +239,14 @@ class Assets extends Prefab {
 				if (isset($asset['path'])) {
 					$path = $asset['path'];
 					$mtime = ($this->f3->get('ASSETS.timestamps') && $asset['origin']!='external'
-						&& is_file($path)) ? '?'.filemtime($path) : '';
+						&& @is_file($path)) ? '?'.filemtime($path) : '';
 					$base = ($this->f3->get('ASSETS.prepend_base') && $asset['origin']!='external'
-						&& is_file($path)) ? $this->f3->get('BASE').'/': '';
-					if ($trimPublicDir && $asset['origin']!='external')
-						$path = substr($path,strlen($trimPublicDir));
+						&& @is_file($path)) ? $this->f3->get('BASE').'/': '';
+					if ($trimPublicDir && $asset['origin']!='external') {
+						$trimPath=trim($trimPublicDir,'/').'/';
+						if (strpos($path,$trimPath)===0)
+							$path = substr($path,strlen($trimPublicDir));
+					}
 					$asset['path'] = $base.$path.$mtime;
 				}
 				$out[]=$this->f3->call($this->formatter[$asset_type],array($asset));
