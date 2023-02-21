@@ -327,7 +327,7 @@ class Assets extends Prefab {
 				foreach ($internal as $type => $int_a) {
 					$filepath = $public_path.$this->f3->hash($hash_key[$type]).'.'.$type;
 					if (!is_dir($public_path))
-						mkdir($public_path,0777,true);
+						mkdir($public_path,0755,true);
 					$content = array();
 					if (!is_file($filepath)) {
 						foreach($int_a as $asset) {
@@ -376,7 +376,7 @@ class Assets extends Prefab {
 		// check final path
 		$public_path = $this->f3->get('ASSETS.minify.public_path');
 		if (!is_dir($public_path))
-			mkdir($public_path,0777,true);
+			mkdir($public_path,0755,true);
 		$type = false;
 		$inline_stack = array();
 		foreach($collection as $i=>&$asset) {
