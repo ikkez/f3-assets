@@ -7,12 +7,11 @@
  *	compliance with the license. Any of the license terms and conditions
  *	can be waived if you get permission from the copyright holder.
  *
- *	Copyright (c) 2020 ~ ikkez
+ *	Copyright (c) 2022 ~ ikkez
  *	Christian Knuth <ikkez0n3@gmail.com>
  *
- *	@version: 1.2.2
- *	@date: 28.02.2021
- *	@since: 08.08.2014
+ *	@version: 1.2.3
+ *	@date: 21.02.2022
  *
  **/
 
@@ -676,7 +675,7 @@ class Assets extends Prefab {
 		if ($src) {
 			$out = '<?php \Assets::instance()->addNode(array(';
 			foreach($attr as $key=>$val)
-				$out.=var_export($key,true).'=>'.(preg_match('/{{(.+?)}}/s',$val)
+				$out.=var_export($key,true).'=>'.(preg_match('/{{(.+?)}}/s',$val ?? '')
 					?$this->template->token($val):var_export($val,true)).',';
 			$out.=')); ?>';
 			return $out;
@@ -723,7 +722,7 @@ class Assets extends Prefab {
 		$out = '';
 		foreach ($attr as $key => $value) {
 			// build dynamic tokens
-			if (preg_match('/{{(.+?)}}/s', $value))
+			if (preg_match('/{{(.+?)}}/s', $value ?? ''))
 				$value = $this->template->build($value);
 			if (preg_match('/{{(.+?)}}/s', $key))
 				$key = $this->template->build($key);
