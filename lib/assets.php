@@ -32,7 +32,7 @@ class Assets extends Prefab {
 	/** @var array */
 	protected $formatter;
 
-	public function __construct(\Template $template=NULL) {
+	public function __construct(?\Template $template=NULL) {
 		$this->template = $template ?: \Template::instance();
 		$f3 = $this->f3 = \Base::instance();
 		$minifyCompiler = function($fileName,$path) {
@@ -72,7 +72,7 @@ class Assets extends Prefab {
 			'prepend_base'=>false
 		);
 		// merge options with defaults
-		$f3->set('ASSETS',$f3->exists('ASSETS',$opt) ?
+		$f3->set('ASSETS',$f3->exists('ASSETS',$opt) && is_array($opt) ?
 			array_replace_recursive($opt_defaults,$opt) : $opt_defaults);
 		// propagate default public temp dir
 		if (!$f3->devoid('ASSETS.public_path')) {
