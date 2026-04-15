@@ -34,24 +34,24 @@ class Assets extends Prefab {
 		$minifyCompiler = function($fileName,$path) {
 			return \Web::instance()->minify($fileName,null,false,$path);
 		};
-		$opt_defaults = array(
+		$opt_defaults = [
 			'auto_include'=>true,
 			'greedy'=>false,
-			'filter'=>array(),
+			'filter'=> [],
 			'public_path'=>'',
-			'combine'=>array(
+			'combine'=> [
 				'public_path'=>'',
 				'exclude'=>'',
 				'merge_attributes'=>false,
-				'slots'=>array(
+				'slots'=> [
 					10=>'top',
 					20=>'external',
 					40=>'internal',
 					60=>'excluded',
 					80=>'inline'
-				),
-			),
-			'minify'=>array(
+                ],
+            ],
+			'minify'=> [
 				'public_path'=>'',
 				'exclude'=>'.*(.min.).*',
 				'inline'=>false,
@@ -59,14 +59,14 @@ class Assets extends Prefab {
 					'js'=>$minifyCompiler,
 					'css'=>$minifyCompiler,
 				]
-			),
+            ],
 			'fixRelativePaths'=>'relative',
 			'trim_public_root'=>false,
 			'handle_inline'=>false,
 			'timestamps'=>false,
 			'onFileNotFound'=>null,
 			'prepend_base'=>false
-		);
+        ];
 		// merge options with defaults
 		$f3->set('ASSETS',$f3->exists('ASSETS',$opt) && is_array($opt) ?
 			array_replace_recursive($opt_defaults,$opt) : $opt_defaults);
@@ -151,7 +151,7 @@ class Assets extends Prefab {
 	 * reset file groups
 	 */
 	public function reset() {
-		$this->assets = array();
+		$this->assets = [];
 	}
 
 	/**
@@ -220,7 +220,7 @@ class Assets extends Prefab {
 	 * @return string
 	 */
 	public function renderGroup($assets) {
-		$out = array();
+		$out = [];
 		$trimPublicDir=$this->getPublicPath();
 		foreach($assets as $asset_type=>$collection) {
 			if ($this->f3->exists('ASSETS.filter.'.$asset_type,$filters)) {
@@ -228,7 +228,7 @@ class Assets extends Prefab {
 					$filters = $this->f3->split($filters);
 				$flist=array_flip($filters);
 				$filters = array_values(array_intersect_key(array_replace($flist, $this->filter), $flist));
-				$collection = $this->f3->relay($filters,array($collection));
+				$collection = $this->f3->relay($filters, [$collection]);
 			}
 			foreach($collection as $asset) {
 				if (isset($asset['path'])) {
@@ -244,7 +244,7 @@ class Assets extends Prefab {
 					}
 					$asset['path'] = $base.$path.$mtime;
 				}
-				$out[]=$this->f3->call($this->formatter[$asset_type],array($asset));
+				$out[]=$this->f3->call($this->formatter[$asset_type], [$asset]);
 			}
 		}
 		return "\n\t".implode("\n\t",$out)."\n";
@@ -260,7 +260,7 @@ class Assets extends Prefab {
 		if (empty($collection) || count($collection) <= 1)
 			return $collection;
 		$cfs=$this->f3->get('ASSETS.combine.slots');
-		$slots=array_fill_keys(array_keys($cfs),array());
+		$slots=array_fill_keys(array_keys($cfs), []);
 		$sn=array_flip($cfs);
 		// sort to slots
 		$exclude = $this->f3->get('ASSETS.combine.exclude');
@@ -271,7 +271,7 @@ class Assets extends Prefab {
 				$i=50;
 				while (isset($slots[$i]))
 					$i++;
-				$slots[$i]=array();
+				$slots[$i]= [];
 				$sn[$a_slot]=$i;
 			}
 			// inline
@@ -287,7 +287,7 @@ class Assets extends Prefab {
 				(!isset($asset['exclude']) ||
 					!in_array('combine',$this->f3->split($asset['exclude']))) &&
 				(empty($exclude) || !preg_match('/'.$exclude.'/i',$asset['path']))) &&
-				(!isset($asset['media']) || in_array($asset['media'],array('all','screen')))) {
+				(!isset($asset['media']) || in_array($asset['media'], ['all','screen']))) {
 				$slots[$sn[$a_slot?:'internal']][] = $asset;
 			} else
 				// excluded internal
@@ -295,11 +295,11 @@ class Assets extends Prefab {
 		}
 		// proceed slots
 		ksort($slots);
-		$out = array();
+		$out = [];
 		foreach ($slots as $slotID => $assets) {
-			$internal=array();
-			$inline=array();
-			$hash_key=array();
+			$internal = [];
+			$inline = [];
+			$hash_key = [];
 			// categorize per slot
 			foreach ($assets as $asset) {
 				if ($slotID == $sn['excluded']) {
@@ -324,7 +324,7 @@ class Assets extends Prefab {
 					$filepath = $public_path.$this->f3->hash($hash_key[$type]).'.'.$type;
 					if (!is_dir($public_path))
 						mkdir($public_path,0755,true);
-					$content = array();
+					$content = [];
 					if (!is_file($filepath)) {
 						foreach($int_a as $asset) {
 							$data = $this->f3->read($asset['path']);
@@ -342,21 +342,21 @@ class Assets extends Prefab {
 							$extra_attr+=array_diff_key($asset, array_flip([
 								'path','origin','type','exclude'
 							]));
-					$out[] = array(
+					$out[] = [
 						'path'=>$filepath,
 						'type'=>$type,
 						'origin'=>'internal'
-					)+$extra_attr;
+                        ] + $extra_attr;
 				}
 			}
 			// combine inline
 			if (!empty($inline)) {
 				foreach ($inline as $type => $inl_a) {
-					$out[] = array(
+					$out[] = [
 						'data'=>implode($inl_a),
 						'type'=>$type,
 						'origin'=>'inline'
-					);
+                    ];
 				}
 			}
 		}
@@ -374,7 +374,7 @@ class Assets extends Prefab {
 		if (!is_dir($public_path))
 			mkdir($public_path,0755,true);
 		$type = false;
-		$inline_stack = array();
+		$inline_stack = [];
 		foreach($collection as $i=>&$asset) {
 			$type = $asset['type'];
 			if ($asset['origin']=='inline') {
@@ -423,19 +423,19 @@ class Assets extends Prefab {
 							$public_path);
 						$this->f3->write($public_path.$filename,$min);
 					}
-					$collection[] = array(
+					$collection[] = [
 						'path'=>$public_path.$filename,
 						'type'=>$type,
 						'origin'=>'internal',
 						'slot'=>$slotGroup,
-					);
+                    ];
 				} else {
-					$collection[] = array(
+					$collection[] = [
 						'data'=>$data,
 						'type'=>$type,
 						'origin'=>'inline',
 						'slot'=>$slotGroup,
-					);
+                    ];
 				}
 			}
 		}
@@ -792,7 +792,7 @@ class Assets extends Prefab {
 	 */
 	static public function renderStyleTag(array $node) {
 		if (!isset($node['@attrib']))
-			$node['@attrib'] = array();
+			$node['@attrib'] = [];
 		if (!isset($node['@attrib']['type']) || $node['@attrib']['type'] == 'text/css')
 			$node['@attrib']['type']='css';
 		return static::renderAssetTag($node);
@@ -842,7 +842,7 @@ class Assets extends Prefab {
 	 */
 	public function _head($node) {
 		unset($node['@attrib']);
-		$content = array();
+		$content = [];
 		// bypass inner content nodes
 		foreach ($node as $el)
 			$content[] = $this->template->build($el);
@@ -872,7 +872,7 @@ class Assets extends Prefab {
 			$params = $this->resolveAttr($node['@attrib']);
 			unset($node['@attrib']);
 		}
-		$content = array();
+		$content = [];
 		// bypass inner content nodes
 		foreach ($node as $el)
 			$content[] = $this->template->build($el);
